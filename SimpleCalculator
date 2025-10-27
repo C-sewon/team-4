@@ -7,4 +7,20 @@ int main() {
     int flag = 0;
     int arr[100];
     int cnt = 0;
+
+    //상훈
+    else if(str[i] == '+')
+    {
+        if(flag == 1)
+        {
+            arr[cnt++] = temp * -1;
+        }
+        else
+        {
+            arr[cnt++] = temp;
+        }
+        flag = 0;
+        temp = 0;
+    }
+    //상훈
 }
