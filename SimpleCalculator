@@ -8,31 +8,50 @@ int main() {
     int arr[100];
     int cnt = 0;
 
+while(1){
+//연경님
 
-    else if(str[i] == '+')
-    {
-        if(flag == 1)
+    for(int i = 0; i < strlen(str); i++){
+    //세원님
+           
+        else if(str[i] == '+')
         {
-            arr[cnt++] = temp * -1;
+            if(flag == 1)
+            {
+                arr[cnt++] = temp * -1;
+            }
+            else
+            {
+                arr[cnt++] = temp;
+            }
+            flag = 0;
+            temp = 0;
         }
-        else
-        {
-            arr[cnt++] = temp;
-        }
-        flag = 0;
-        temp = 0;
-    }
-    else if(str[i]=='-'){
-        if(flag==1){
-            arr[cnt++]=temp*-1;
+        else if(str[i]=='-'){
+            if(flag==1){
+                arr[cnt++]=temp*-1;
+            }
+            else{
+                arr[cnt++]=temp;
+            }
+            flag=1;
+            temp=0;
         }
         else{
-            arr[cnt++]=tmep;
+            continue;
         }
-        flag=1;
-        temp=0;
+    }
+    if (flag == 1){
+        arr[cnt++] = temp * -1;
     }
     else{
-        continue;
+        arr[cnt++] = temp;
     }
+    int result = 0;
+    for (int i = 0; i < cnt; i++) {
+        result += arr[i];
+    }
+    printf(" Value : %d\n\n", result);
+    printf("\n\n");
+}
 }
