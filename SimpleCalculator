@@ -35,16 +35,16 @@ while(1){
             flag = 0;
             temp = 0;
         }
-        else if(str[i]=='-'){
+       else if(str[i]=='-'){
             if(flag==1){
-                arr[cnt++]=temp*-1;
+                arr[cnt++]=temp *-1;
             }
             else{
                 arr[cnt++]=temp;
             }
             flag=1;
             temp=0;
-        }
+       }
         else{
             continue;
         }
