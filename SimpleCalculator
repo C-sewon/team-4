@@ -22,10 +22,9 @@ while(1){
     if (str[i] <= '9' && str[i] >= '0') {
         temp *= 10;
         temp += str[i] - '0';
-     }
-           
-        else if(str[i] == '+')
-        {
+    }  
+    else if(str[i] == '+')
+    {
             if(flag == 1)
             {
                 arr[cnt++] = temp * -1;
@@ -36,7 +35,7 @@ while(1){
             }
             flag = 0;
             temp = 0;
-        }
+    }
        else if(str[i]=='-'){
             if(flag==1){
                 arr[cnt++]=temp *-1;
