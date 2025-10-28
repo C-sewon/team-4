@@ -9,7 +9,15 @@ int main() {
     int cnt = 0;
 
 while(1){
-//연경님
+    temp = 0; flag = 0; arr[100]; cnt = 0;
+    printf("Enter an xpression >> ");
+    gets_s(str);
+
+    if(strcmp(str, "0") == 0){
+        return 0;
+    }
+
+
 
     for(int i = 0; i < strlen(str); i++){
     //세원님
