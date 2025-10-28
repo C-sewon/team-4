@@ -18,9 +18,11 @@ while(1){
     }
 
 
-
-    for(int i = 0; i < strlen(str); i++){
-    //세원님
+  for (int i = 0; i < strlen(str); i++) {
+    if (str[i] <= '9' && str[i] >= '0') {
+        temp *= 10;
+        temp += str[i] - '0';
+     }
            
         else if(str[i] == '+')
         {
