@@ -1,1 +1,125 @@
+#include "raylib.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 
+typedef struct {
+    int a, b;
+    char op;        
+    int answer;
+    int choices[4];
+} Problem;
+
+Problem MakeProblem() {
+    Problem p;
+    int type = GetRandomValue(0, 3);
+
+    p.a = GetRandomValue(1, 12);
+    p.b = GetRandomValue(1, 12);
+
+    if (type == 0) { p.op = '+'; p.answer = p.a + p.b; }
+    else if (type == 1) { p.op = '-'; p.answer = p.a - p.b; }
+    else if (type == 2) { p.op = '*'; p.answer = p.a * p.b; }
+    else {
+        p.op = '/';
+        p.answer = GetRandomValue(1, 12);
+        p.b = GetRandomValue(1, 12);
+        p.a = p.answer * p.b;
+    }
+
+    int correct = GetRandomValue(0, 3);
+    for (int i = 0; i < 4; i++) {
+        p.choices[i] = p.answer + GetRandomValue(-5, 5);
+    }
+    p.choices[correct] = p.answer;
+
+    return p;
+}
+
+int main() {
+    InitWindow(800, 480, "산수게임 - 문제 풀이 시간 측정");
+    SetTargetFPS(60);
+    srand(time(NULL));
+
+    Problem cur = MakeProblem();
+
+    double startTime = GetTime();     
+    double solveTime = 0;             
+    double totalSolveTime = 0;        
+    int problemCount = 0;            
+
+    bool solved = false;             
+    double showResultTimer = 0;      
+
+    while (!WindowShouldClose()) {
+        if (!solved && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+            Vector2 m = GetMousePosition();
+            int baseX = 150;
+            int baseY = 200;
+            int w = 500;
+            int h = 50;
+            int gap = 15;
+
+            for (int i = 0; i < 4; i++) {
+                Rectangle r = { (float)baseX, (float)(baseY + i * (h + gap)), (float)w, (float)h };
+                if (CheckCollisionPointRec(m, r)) {
+                    solveTime = GetTime() - startTime;
+                    totalSolveTime += solveTime;
+                    problemCount++;
+
+                    solved = true;
+                    showResultTimer = 1.0;  
+                }
+            }
+        }
+
+        if (solved) {
+            showResultTimer -= GetFrameTime();
+            if (showResultTimer <= 0) {
+                solved = false;
+                cur = MakeProblem();
+                startTime = GetTime();   
+            }
+        }
+
+        BeginDrawing();
+        ClearBackground(RAYWHITE);
+
+        DrawText("산수게임 (풀이 시간 측정)", 20, 20, 28, BLACK);
+
+        char qbuf[64];
+        snprintf(qbuf, sizeof(qbuf), "%d %c %d = ?", cur.a, cur.op, cur.b);
+        DrawText(qbuf, 150, 120, 40, BLACK);
+
+        int baseX = 150;
+        int baseY = 200;
+        int w = 500;
+        int h = 50;
+        int gap = 15;
+
+        for (int i = 0; i < 4; i++) {
+            Rectangle r = { (float)baseX, (float)(baseY + i * (h + gap)), (float)w, (float)h };
+
+            Color col = LIGHTGRAY;
+            if (solved) col = (cur.choices[i] == cur.answer ? GREEN : RED);
+            else if (CheckCollisionPointRec(GetMousePosition(), r)) col = GRAY;
+
+            DrawRectangleRec(r, col);
+
+            char buf[32];
+            snprintf(buf, sizeof(buf), "%d", cur.choices[i]);
+            DrawText(buf, baseX + 20, baseY + i * (h + gap) + 12, 28, BLACK);
+        }
+
+        if (problemCount > 0)
+            DrawText(TextFormat("최근 문제 풀이 시간: %.2f 초", solveTime), 20, 420, 20, DARKBLUE);
+
+        if (problemCount > 0)
+            DrawText(TextFormat("평균 풀이 시간: %.2f 초", totalSolveTime / problemCount), 20, 450, 20, DARKBLUE);
+
+        EndDrawing();
+    }
+
+    CloseWindow();
+    return 0;
+}
