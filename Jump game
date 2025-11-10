@@ -1,1 +1,178 @@
+#include "raylib.h"
+#include <stdlib.h>
+#include <time.h>
+#include <stdio.h>
+
+#define SCREEN_W 900
+#define SCREEN_H 400
+
+typedef struct Player {
+    Rectangle rect;
+    float vy;           
+    bool onGround;
+} Player;
+
+typedef struct Obstacle {
+    Rectangle rect;
+    bool active;
+} Obstacle;
+
+static const int MAX_OBS = 8;
+
+typedef enum { PLAYING, GAMEOVER } GameState;
+
+int main(void) {
+    InitWindow(SCREEN_W, SCREEN_H, "Raylib Dino - Simple Clone");
+    SetTargetFPS(60);
+
+    srand((unsigned)time(NULL));
+
+    Player player;
+    player.rect.x = 60;
+    player.rect.y = SCREEN_H - 70;
+    player.rect.width = 40;
+    player.rect.height = 50;
+    player.vy = 0.0f;
+    player.onGround = true;
+
+    const float groundY = SCREEN_H - 20;
+    const float gravity = 1200.0f;   
+    const float jumpVel = -480.0f;  
+
+    Obstacle obs[MAX_OBS];
+    for (int i = 0; i < MAX_OBS; i++) {
+        obs[i].active = false;
+    }
+    float spawnTimer = 0.0f;
+    float nextSpawn = 1.0f + (rand() % 120) / 60.0f;
+
+    
+    GameState state = PLAYING;
+    float gameSpeed = 300.0f; 
+    float score = 0.0f;
+    float highscore = 0.0f;
+
+    int fontSize = 20;
+
+    while (!WindowShouldClose()) {
+        float dt = GetFrameTime();
+
+        if (IsKeyPressed(KEY_ESCAPE)) break;
+        if (state == GAMEOVER && IsKeyPressed(KEY_R)) {
+            
+            for (int i = 0; i < MAX_OBS; i++) obs[i].active = false;
+            player.rect.y = SCREEN_H - 70;
+            player.vy = 0;
+            player.onGround = true;
+            spawnTimer = 0;
+            nextSpawn = 1.0f + (rand() % 120) / 60.0f;
+            score = 0;
+            gameSpeed = 300.0f;
+            state = PLAYING;
+        }
+
+        if (state == PLAYING) {
+            if ((IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_UP)) && player.onGround) {
+                player.vy = jumpVel;
+                player.onGround = false;
+            }
+
+            
+            player.vy += gravity * dt;
+            player.rect.y += player.vy * dt;
+
+    
+            if (player.rect.y + player.rect.height >= groundY) {
+                player.rect.y = groundY - player.rect.height;
+                player.vy = 0.0f;
+                player.onGround = true;
+            }
+
+          
+            spawnTimer += dt;
+            if (spawnTimer >= nextSpawn) {
+                spawnTimer = 0.0f;
+                nextSpawn = 0.6f + (rand() % 140) / 100.0f; // 0.6 ~ 2.0초 사이
+
+              
+                for (int i = 0; i < MAX_OBS; i++) {
+                    if (!obs[i].active) {
+                        obs[i].active = true;
+                        obs[i].rect.width = 20 + (rand() % 30); // 20~50 px
+                        obs[i].rect.height = 30 + (rand() % 40); // 30~70 px
+                        obs[i].rect.x = SCREEN_W + 50;
+                        obs[i].rect.y = groundY - obs[i].rect.height;
+                        break;
+                    }
+                }
+            }
+
+        
+            for (int i = 0; i < MAX_OBS; i++) {
+                if (!obs[i].active) continue;
+                obs[i].rect.x -= gameSpeed * dt;
+
+                
+                if (obs[i].rect.x + obs[i].rect.width < -50) {
+                    obs[i].active = false;
+                }
+
+              
+                if (CheckCollisionRecs(obs[i].rect, player.rect)) {
+                    state = GAMEOVER;
+                    if (score > highscore) highscore = score;
+                    break;
+                }
+            }
+
+            
+            score += gameSpeed * dt * 0.01f; 
+            gameSpeed += 5.0f * dt;
+        }
+
+        
+        BeginDrawing();
+            ClearBackground(RAYWHITE);
+
+          
+            DrawRectangle(0, groundY, SCREEN_W, SCREEN_H - groundY, LIGHTGRAY);
+            DrawLine(0, (int)groundY, SCREEN_W, (int)groundY, DARKGRAY);
+
+         
+            if (player.onGround) {
+                
+                float t = GetTime() * 12.0f;
+                int bob = (int)(4.0f * (sin(t) > 0 ? 1 : -1));
+                DrawRectangleRec(player.rect, MAROON);
+                DrawRectangle(player.rect.x + 5, player.rect.y + player.rect.height - 6 + bob, 12, 6, BLACK); 
+                DrawRectangle(player.rect.x + player.rect.width - 17, player.rect.y + player.rect.height - 6 - bob, 12, 6, BLACK);
+            } else {
+                DrawRectangleRec(player.rect, MAROON);
+            }
+
+            
+            for (int i = 0; i < MAX_OBS; i++) {
+                if (!obs[i].active) continue;
+                DrawRectangleRec(obs[i].rect, DARKGREEN);
+            }
+
+            
+            DrawText(TextFormat("SCORE: %04.0f", score), SCREEN_W - 200, 20, fontSize, BLACK);
+            DrawText(TextFormat("BEST: %04.0f", highscore), SCREEN_W - 200, 46, 14, GRAY);
+
+           
+            if (state == PLAYING) {
+                DrawText("SPACE / UP = Jump", 12, 16, 16, DARKGRAY);
+            } else if (state == GAMEOVER) {
+                DrawText("GAME OVER", SCREEN_W/2 - 80, SCREEN_H/2 - 50, 40, RED);
+                DrawText("Press R to restart", SCREEN_W/2 - 100, SCREEN_H/2 + 10, 20, DARKGRAY);
+                DrawText("Press ESC to quit", SCREEN_W/2 - 95, SCREEN_H/2 + 34, 16, DARKGRAY);
+            }
+
+        EndDrawing();
+    }
+
+    CloseWindow();
+    return 0;
+}
 
