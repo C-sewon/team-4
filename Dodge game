@@ -1,1 +1,175 @@
 
+#include "raylib.h"
+#include <stdlib.h>
+
+#define SCREEN_W 900
+#define SCREEN_H 400
+
+#define LANE_COUNT 5
+#define MAX_BULLETS 64
+
+typedef struct Bullet {
+    Rectangle rect;
+    float vx;
+    bool active;
+} Bullet;
+
+typedef enum {
+    STATE_PLAYING,
+    STATE_GAMEOVER
+} GameState;
+
+int main(void)
+{
+    InitWindow(SCREEN_W, SCREEN_H, "Index Dodge - raylib");
+    SetTargetFPS(60);
+
+    // 중앙 인덱스 바 설정
+    float barWidth = 26.0f;
+    float laneHeight = 50.0f;
+    float totalHeight = laneHeight * LANE_COUNT;
+    float startY = (SCREEN_H - totalHeight) / 2.0f;
+    float barX = SCREEN_W / 2.0f - barWidth / 2.0f;
+
+    Rectangle lanes[LANE_COUNT];
+    for (int i = 0; i < LANE_COUNT; i++) {
+        lanes[i].x = barX;
+        lanes[i].y = startY + i * laneHeight;
+        lanes[i].width = barWidth;
+        lanes[i].height = laneHeight - 4.0f; // 살짝 간격
+    }
+
+    int currentIndex = LANE_COUNT / 2; // 시작은 중앙
+    Bullet bullets[MAX_BULLETS] = { 0 };
+
+    float spawnTimer = 0.0f;
+    float nextSpawn = 0.8f; // 첫 스폰까지 시간
+    GameState state = STATE_PLAYING;
+    int score = 0; // 피한 탄막 수
+
+    while (!WindowShouldClose())
+    {
+        float dt = GetFrameTime();
+
+        // ESC로 종료
+        if (IsKeyPressed(KEY_ESCAPE)) break;
+
+        // -----------------
+        // 게임 로직
+        // -----------------
+        if (state == STATE_PLAYING)
+        {
+            // 인덱스 이동 (순환)
+            if (IsKeyPressed(KEY_W)) {
+                currentIndex--;
+                if (currentIndex < 0) currentIndex = LANE_COUNT - 1;
+            }
+            if (IsKeyPressed(KEY_S)) {
+                currentIndex++;
+                if (currentIndex >= LANE_COUNT) currentIndex = 0;
+            }
+
+            // 탄막 스폰 타이머
+            spawnTimer += dt;
+            if (spawnTimer >= nextSpawn) {
+                spawnTimer = 0.0f;
+                nextSpawn = 0.5f + (float)GetRandomValue(0, 120) / 100.0f; // 0.5 ~ 1.7초 랜덤
+
+                int lane = GetRandomValue(0, LANE_COUNT - 1);
+                bool fromLeft = (GetRandomValue(0, 1) == 0);
+
+                // 비활성 bullet 하나 찾아서 사용
+                for (int i = 0; i < MAX_BULLETS; i++) {
+                    if (!bullets[i].active) {
+                        bullets[i].active = true;
+
+                        float h = lanes[lane].height * 0.7f;
+                        bullets[i].rect.height = h;
+                        bullets[i].rect.width = 26.0f;
+                        bullets[i].rect.y = lanes[lane].y + (lanes[lane].height - h) / 2.0f;
+
+                        if (fromLeft) {
+                            bullets[i].rect.x = -bullets[i].rect.width - 40.0f;
+                            bullets[i].vx = 400.0f;
+                        } else {
+                            bullets[i].rect.x = SCREEN_W + 40.0f;
+                            bullets[i].vx = -400.0f;
+                        }
+                        break;
+                    }
+                }
+            }
+
+            // 탄막 이동 & 충돌 처리
+            for (int i = 0; i < MAX_BULLETS; i++) {
+                if (!bullets[i].active) continue;
+
+                bullets[i].rect.x += bullets[i].vx * dt;
+
+                // 중앙 인덱스 칸과 충돌하면 패배
+                if (CheckCollisionRecs(bullets[i].rect, lanes[currentIndex])) {
+                    state = STATE_GAMEOVER;
+                }
+
+                // 화면 바깥 완전히 나가면 소멸 + 점수 증가
+                if (bullets[i].rect.x < -150.0f || bullets[i].rect.x > SCREEN_W + 150.0f) {
+                    bullets[i].active = false;
+                    if (state == STATE_PLAYING) score++;
+                }
+            }
+        }
+        else if (state == STATE_GAMEOVER)
+        {
+            if (IsKeyPressed(KEY_R)) {
+                // 리셋
+                for (int i = 0; i < MAX_BULLETS; i++) bullets[i].active = false;
+                spawnTimer = 0.0f;
+                nextSpawn = 0.8f;
+                currentIndex = LANE_COUNT / 2;
+                score = 0;
+                state = STATE_PLAYING;
+            }
+        }
+
+        // -----------------
+        // 렌더링
+        // -----------------
+        BeginDrawing();
+        ClearBackground((Color){ 190, 210, 235, 255 }); // 살짝 파란 배경
+
+        // 중앙 인덱스 바
+        for (int i = 0; i < LANE_COUNT; i++) {
+            Color fill = (i == currentIndex) ? BLUE : LIGHTGRAY;
+            DrawRectangleRec(lanes[i], fill);
+            DrawRectangleLinesEx(lanes[i], 2.0f, (Color){ 40, 40, 40, 255 });
+        }
+
+ 
+
+        // 탄막
+        for (int i = 0; i < MAX_BULLETS; i++) {
+            if (!bullets[i].active) continue;
+            DrawRectangleRec(bullets[i].rect, (Color){20,20,20,255});
+        }
+
+        // UI
+        DrawText("W / S : Move index (wraps)", 20, 20, 20, DARKGRAY);
+        DrawText("Avoid incoming blocks from both sides", 20, 44, 18, DARKGRAY);
+        DrawText(TextFormat("Score: %d", score), 20, 74, 22, (Color){10,10,10,255});
+
+        if (state == STATE_GAMEOVER) {
+            const char *msg = "GAME OVER";
+            int fw = MeasureText(msg, 48);
+            DrawText(msg, SCREEN_W/2 - fw/2, SCREEN_H/2 - 60, 48, RED);
+
+            const char *msg2 = "Press R to restart, ESC to quit";
+            int fw2 = MeasureText(msg2, 22);
+            DrawText(msg2, SCREEN_W/2 - fw2/2, SCREEN_H/2 + 4, 22, DARKGRAY);
+        }
+
+        EndDrawing();
+    }
+
+    CloseWindow();
+    return 0;
+}
