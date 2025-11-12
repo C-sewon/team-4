@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define TIME_LIMIT 7.0f   // time limit per problem (seconds)
+#define TIME_LIMIT 7.0f
 #define MAX_INPUT 10
 
 int main(void)
@@ -26,7 +26,6 @@ int main(void)
         {
             timer -= GetFrameTime();
 
-            // handle numeric input
             int key = GetCharPressed();
             while (key > 0)
             {
@@ -38,13 +37,13 @@ int main(void)
                 key = GetCharPressed();
             }
 
-            // backspace
+           
             if (IsKeyPressed(KEY_BACKSPACE) && inputIndex > 0)
             {
                 input[--inputIndex] = '\0';
             }
 
-            // check answer on Enter
+        
             if (IsKeyPressed(KEY_ENTER))
             {
                 // if no input -> game over
@@ -57,7 +56,7 @@ int main(void)
                     int userAnswer = atoi(input);
                     if (userAnswer == answer)
                     {
-                        // correct -> next problem
+                       
                         num1 = rand() % 20 + 1;
                         num2 = rand() % 20 + 1;
                         answer = num1 + num2;
@@ -73,7 +72,7 @@ int main(void)
                 }
             }
 
-            // time over
+           
             if (timer <= 0.0f)
             {
                 gameOver = true;
