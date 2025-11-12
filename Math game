@@ -3,120 +3,125 @@
 #include <stdlib.h>
 #include <time.h>
 
-typedef struct {
-    int a, b;
-    char op;        
-    int answer;
-    int choices[4];
-} Problem;
+#define TIME_LIMIT 7.0f   // time limit per problem (seconds)
+#define MAX_INPUT 10
 
-Problem MakeProblem() {
-    Problem p;
-    int type = GetRandomValue(0, 3);
-
-    p.a = GetRandomValue(1, 12);
-    p.b = GetRandomValue(1, 12);
-
-    if (type == 0) { p.op = '+'; p.answer = p.a + p.b; }
-    else if (type == 1) { p.op = '-'; p.answer = p.a - p.b; }
-    else if (type == 2) { p.op = '*'; p.answer = p.a * p.b; }
-    else {
-        p.op = '/';
-        p.answer = GetRandomValue(1, 12);
-        p.b = GetRandomValue(1, 12);
-        p.a = p.answer * p.b;
-    }
-
-    int correct = GetRandomValue(0, 3);
-    for (int i = 0; i < 4; i++) {
-        p.choices[i] = p.answer + GetRandomValue(-5, 5);
-    }
-    p.choices[correct] = p.answer;
-
-    return p;
-}
-
-int main() {
-    InitWindow(800, 480, "산수게임 - 문제 풀이 시간 측정");
+int main(void)
+{
+    InitWindow(800, 450, "Math Game - Solve within 7 seconds!");
     SetTargetFPS(60);
-    srand(time(NULL));
+    srand((unsigned)time(NULL));
 
-    Problem cur = MakeProblem();
+    int num1 = rand() % 20 + 1;
+    int num2 = rand() % 20 + 1;
+    int answer = num1 + num2;
+    char input[MAX_INPUT] = {0};
+    int inputIndex = 0;
+    float timer = TIME_LIMIT;
+    bool gameOver = false;
 
-    double startTime = GetTime();     
-    double solveTime = 0;             
-    double totalSolveTime = 0;        
-    int problemCount = 0;            
+    while (!WindowShouldClose())
+    {
+        if (!gameOver)
+        {
+            timer -= GetFrameTime();
 
-    bool solved = false;             
-    double showResultTimer = 0;      
+            // handle numeric input
+            int key = GetCharPressed();
+            while (key > 0)
+            {
+                if (key >= '0' && key <= '9' && inputIndex < MAX_INPUT - 1)
+                {
+                    input[inputIndex++] = (char)key;
+                    input[inputIndex] = '\0';
+                }
+                key = GetCharPressed();
+            }
 
-    while (!WindowShouldClose()) {
-        if (!solved && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-            Vector2 m = GetMousePosition();
-            int baseX = 150;
-            int baseY = 200;
-            int w = 500;
-            int h = 50;
-            int gap = 15;
+            // backspace
+            if (IsKeyPressed(KEY_BACKSPACE) && inputIndex > 0)
+            {
+                input[--inputIndex] = '\0';
+            }
 
-            for (int i = 0; i < 4; i++) {
-                Rectangle r = { (float)baseX, (float)(baseY + i * (h + gap)), (float)w, (float)h };
-                if (CheckCollisionPointRec(m, r)) {
-                    solveTime = GetTime() - startTime;
-                    totalSolveTime += solveTime;
-                    problemCount++;
-
-                    solved = true;
-                    showResultTimer = 1.0;  
+            // check answer on Enter
+            if (IsKeyPressed(KEY_ENTER))
+            {
+                // if no input -> game over
+                if (inputIndex == 0)
+                {
+                    gameOver = true;
+                }
+                else
+                {
+                    int userAnswer = atoi(input);
+                    if (userAnswer == answer)
+                    {
+                        // correct -> next problem
+                        num1 = rand() % 20 + 1;
+                        num2 = rand() % 20 + 1;
+                        answer = num1 + num2;
+                        inputIndex = 0;
+                        input[0] = '\0';
+                        timer = TIME_LIMIT;
+                    }
+                    else
+                    {
+                        // wrong -> game over
+                        gameOver = true;
+                    }
                 }
             }
-        }
 
-        if (solved) {
-            showResultTimer -= GetFrameTime();
-            if (showResultTimer <= 0) {
-                solved = false;
-                cur = MakeProblem();
-                startTime = GetTime();   
+            // time over
+            if (timer <= 0.0f)
+            {
+                gameOver = true;
             }
         }
 
+        // ====== DRAW ======
         BeginDrawing();
         ClearBackground(RAYWHITE);
 
-        DrawText("산수게임 (풀이 시간 측정)", 20, 20, 28, BLACK);
+        if (!gameOver)
+        {
+            DrawText(TextFormat("%d + %d = ?", num1, num2), 300, 120, 48, DARKBLUE);
+            DrawText(TextFormat("Your answer: %s", (inputIndex > 0) ? input : ""), 300, 200, 28, GRAY);
+            DrawText(TextFormat("Time left: %.1f s", timer), 300, 260, 28, RED);
+            DrawText("Press Enter to submit (empty or wrong -> GAME OVER).", 120, 340, 18, DARKGRAY);
+        }
+        else
+        {
+            DrawText("GAME OVER", 260, 170, 72, RED);
+            DrawText(TextFormat("%d + %d = %d", num1, num2, answer), 300, 260, 28, DARKBLUE);
+            DrawText("Press any key to exit.", 300, 320, 22, GRAY);
 
-        char qbuf[64];
-        snprintf(qbuf, sizeof(qbuf), "%d %c %d = ?", cur.a, cur.op, cur.b);
-        DrawText(qbuf, 150, 120, 40, BLACK);
+            // wait a short moment so user sees message, then allow exit by key
+            EndDrawing();
+            // small pause so text renders before close (raylib 제공 함수가 없으면 이 줄 제거 가능)
+            // WaitTime(0.5); // (optional) uncomment if your raylib supports it
 
-        int baseX = 150;
-        int baseY = 200;
-        int w = 500;
-        int h = 50;
-        int gap = 15;
-
-        for (int i = 0; i < 4; i++) {
-            Rectangle r = { (float)baseX, (float)(baseY + i * (h + gap)), (float)w, (float)h };
-
-            Color col = LIGHTGRAY;
-            if (solved) col = (cur.choices[i] == cur.answer ? GREEN : RED);
-            else if (CheckCollisionPointRec(GetMousePosition(), r)) col = GRAY;
-
-            DrawRectangleRec(r, col);
-
-            char buf[32];
-            snprintf(buf, sizeof(buf), "%d", cur.choices[i]);
-            DrawText(buf, baseX + 20, baseY + i * (h + gap) + 12, 28, BLACK);
+            // block until any key pressed or window closed
+            while (!WindowShouldClose())
+            {
+                if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ESCAPE) ||
+                    GetKeyPressed() != 0 || GetCharPressed() != 0)
+                {
+                    break;
+                }
+                // draw the GAME OVER frame continuously to keep the window responsive
+                BeginDrawing();
+                ClearBackground(RAYWHITE);
+                DrawText("GAME OVER", 260, 170, 72, RED);
+                DrawText(TextFormat("%d + %d = %d", num1, num2, answer), 300, 260, 28, DARKBLUE);
+                DrawText("Press any key to exit.", 300, 320, 22, GRAY);
+                EndDrawing();
+            }
+            break;
         }
 
-        if (problemCount > 0)
-            DrawText(TextFormat("최근 문제 풀이 시간: %.2f 초", solveTime), 20, 420, 20, DARKBLUE);
-
-        if (problemCount > 0)
-            DrawText(TextFormat("평균 풀이 시간: %.2f 초", totalSolveTime / problemCount), 20, 450, 20, DARKBLUE);
-
+        
         EndDrawing();
     }
 
