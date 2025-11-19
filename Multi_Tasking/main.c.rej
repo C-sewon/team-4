@@ -1,0 +1,78 @@
+diff a/Multi_Tasking/main.c b/Multi_Tasking/main.c	(rejected hunks)
+@@ -1,42 +1,53 @@
+ #include "raylib.h"
+ #include <stdio.h>
++#include <stdlib.h>
++#include <time.h>
++#include <math.h>
+ 
+-int main(void) {
+-    InitWindow(1000, 600, "Multitasking Game");
++// ------------------ 공통 ------------------
++#define WINDOW_W 1920
++#define WINDOW_H 1080
++
++
++int main() {
++    InitWindow(WINDOW_W, WINDOW_H, "Multitasking Game");
+     SetTargetFPS(60);
++    srand((unsigned)time(NULL));
+ 
+     double startTime = GetTime();
+ 
+-    while (!WindowShouldClose()) {
+-        double elapsed = GetTime() - startTime;
++    const int screenW = WINDOW_W;
++    const int screenH = WINDOW_H;
++    const int topBarHeight = 50;
+ 
+-        BeginDrawing();
+-        ClearBackground(RAYWHITE);
++    const int midX = screenW / 2;
++    const int midY = screenH / 2 + 25;
+ 
+-        int screenW = GetScreenWidth();
+-        int screenH = GetScreenHeight();
+ 
+-        // Top bar
+-        DrawRectangle(0, 0, screenW, 50, LIGHTGRAY);
+-        DrawText("Player_Name", 20, 15, 20, BLACK);
+-        DrawText(TextFormat("%02d:%02d", (int)elapsed / 60, (int)elapsed % 60),
+-                 screenW - 100, 15, 20, BLACK);
+ 
+-        DrawText("5 + 3 = ?", screenW / 2 - 70, 15, 20, BLACK);
+-        DrawText("Ans: -", screenW / 2 + 60, 15, 20, DARKGRAY);
++    // ---- 각 게임 영역 (뷰포트) ----
++    Rectangle vpRhythm = { 0, (float)topBarHeight, (float)midX, (float)(midY - topBarHeight) };        // 좌상
++    Rectangle vpRPS    = { (float)midX, (float)topBarHeight, (float)(screenW - midX), (float)(midY - topBarHeight) }; // 우상
++    Rectangle vpDino   = { 0, (float)midY, (float)midX, (float)(screenH - midY) };                     // 좌하
++    Rectangle vpDodge  = { (float)midX, (float)midY, (float)(screenW - midX), (float)(screenH - midY) }; // 우하
++
++    while (!WindowShouldClose()) {
++        float dt = GetFrameTime();
++        double elapsed = GetTime() - startTime;
+ 
+-        // Division lines
+-        DrawLine(screenW / 2, 50, screenW / 2, screenH, BLACK);
+-        DrawLine(0, (screenH / 2) + 25, screenW, (screenH / 2) + 25, BLACK);
+-        DrawLine(0, 50, screenW, 50, BLACK);
+ 
+-        DrawText("Rhythm Game", 150, 150, 20, GRAY);
+ 
+-        DrawText("RPS Move", 700, 150, 20, GRAY);
++        if (IsKeyPressed(KEY_ESCAPE)) break;
+ 
+-        DrawText("Jump Game", 150, 400, 20, GRAY);
++        // =============================
++        //          렌더링
++        // =============================
++        BeginDrawing();
++        ClearBackground(RAYWHITE);
+ 
+-        DrawText("Dodge Game", 700, 400, 20, GRAY);
++        EndMode2D();
++        EndScissorMode();
++        
+ 
+         EndDrawing();
+     }
