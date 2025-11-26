@@ -10,14 +10,15 @@
 #define RPS_ZONE_COUNT   3
 #define RPS_PLAYER_SPEED 500.0f
 
+//================ 가위바위보 게임(오른쪽 위) ================
 typedef enum { RPS_SCISSORS = 0, RPS_ROCK = 1, RPS_PAPER = 2 } RPS;
 
 const char* RpsToStr(int r) {
     switch (r) {
-    case RPS_SCISSORS: return "Scissors";
-    case RPS_ROCK:     return "Rock";
-    case RPS_PAPER:    return "Paper";
-    default:           return "?";
+        case RPS_SCISSORS: return "Scissors";
+        case RPS_ROCK:     return "Rock";
+        case RPS_PAPER:    return "Paper";
+        default:           return "?";
     }
 }
 
@@ -28,7 +29,7 @@ int RpsBeats(int a, int b) {
     return 0;
 }
 
-// ------------------ 리듬 게임 (왼쪽 위) ------------------
+// ================ 리듬 게임 (왼쪽 위) ================
 #define RHYTHM_MAX_NOTES   20
 #define RHYTHM_SPEED       300.0f
 #define RHYTHM_HIT_X       180.0f
@@ -41,11 +42,11 @@ typedef struct {
     int active; // 1=활성, 0=비활성
 } RhythmNote;
 
-// ------------------ 수학 게임 (상단바) ------------------
+// ================ 수학 게임 (상단바) ================
 #define MATH_TIME_LIMIT 7.0f
 #define MATH_MAX_INPUT  10
 
-// ------------------ 피하기 게임 (오른쪽 아래) ------------------
+// ================ 피하기 게임 (오른쪽 아래) ================
 #define LANE_COUNT   5
 #define MAX_BULLETS  64
 
@@ -59,6 +60,22 @@ typedef enum {
     DODGE_PLAYING,
     DODGE_GAMEOVER
 } DodgeState;
+
+// ================ 점프 게임 (왼쪽 아래) ================
+#define DINO_MAX_OBS 8
+
+typedef struct {
+    Rectangle rect;
+    float vy;
+    bool onGround;
+} DinoPlayer;
+
+typedef struct {
+    Rectangle rect;
+    bool active;
+} DinoObstacle;
+
+typedef enum { DINO_PLAYING, DINO_GAMEOVER } DinoState;
 
 int main() 
 {
@@ -75,13 +92,13 @@ int main()
     const int midX = screenW / 2;
     const int midY = screenH / 2 + 25;
 
-    // ---- 각 게임 영역 (뷰포트) ----
+    // ==== 각 게임 영역 (뷰포트) ====
     Rectangle vpRhythm = { 0, (float)topBarHeight, (float)midX, (float)(midY - topBarHeight) };        // 좌상
     Rectangle vpRPS    = { (float)midX, (float)topBarHeight, (float)(screenW - midX), (float)(midY - topBarHeight) }; // 우상
     Rectangle vpDino   = { 0, (float)midY, (float)midX, (float)(screenH - midY) };                     // 좌하
     Rectangle vpDodge  = { (float)midX, (float)midY, (float)(screenW - midX), (float)(screenH - midY) }; // 우하
 
-    // ------------------ 수학 게임 상태 ------------------
+    // ================ 수학 게임 상태 ================
     int   mathNum1 = rand() % 20 + 1;
     int   mathNum2 = rand() % 20 + 1;
     int   mathAnswer = mathNum1 + mathNum2;
@@ -90,7 +107,7 @@ int main()
     float mathTimer = MATH_TIME_LIMIT;
     bool  mathGameOver = false;
 
-    // ------------------ 피하기 게임 상태 (우하단) ------------------
+    // ================ 피하기 게임 상태 ================
     float dodgeW = vpDodge.width;
     float dodgeH = vpDodge.height;
 
@@ -114,12 +131,13 @@ int main()
     DodgeState dodgeState = DODGE_PLAYING;
     int dodgeScore        = 0;
 
-    // ------------------ 리듬 게임 상태 (좌상단) ------------------
+    // ================ 리듬 게임 상태 ================
     RhythmNote rhythmNotes[RHYTHM_MAX_NOTES];
     for (int i = 0; i < RHYTHM_MAX_NOTES; i++) rhythmNotes[i].active = 0;
     float rhythmSpawnTimer = 0.0f;
     float rhythmNextSpawn  = (float)(rand() % 1000) / 1000.0f + 0.5f; // 0.5~1.5
     int   rhythmGameOver   = 0;
+
 
     float rpsW = vpRPS.width;
     float rpsH = vpRPS.height;
@@ -155,6 +173,37 @@ int main()
     float rpsResultEndTime = 0.0f;
     const float rpsResultShowTime = 0.8f;
 
+    // ================ 점프 게임 상태 (좌하단) ================
+    float dinoW = vpDino.width;
+    float dinoH = vpDino.height;
+
+    DinoPlayer dinoPlayer;
+    dinoPlayer.rect.x = 60;
+    dinoPlayer.rect.y = dinoH - 70;
+    dinoPlayer.rect.width  = 40;
+    dinoPlayer.rect.height = 50;
+    dinoPlayer.vy = 0.0f;
+    dinoPlayer.onGround = true;
+
+    float dinoGroundY = dinoH - 20;
+    float dinoGravity = 1200.0f;
+    float dinoJumpVel = -480.0f;
+
+    DinoObstacle dinoObs[DINO_MAX_OBS];
+    for (int i = 0; i < DINO_MAX_OBS; i++) dinoObs[i].active = false;
+
+    float dinoSpawnTimer = 0.0f;
+    float dinoNextSpawn  = 1.0f + (rand() % 120) / 60.0f;
+
+    DinoState dinoState = DINO_PLAYING;
+    float dinoGameSpeed = 300.0f;
+    float dinoScore     = 0.0f;
+    float dinoHighscore = 0.0f;
+
+    int dinoFontSize = 20;
+
+
+
     while (!WindowShouldClose()) {
         float dt = GetFrameTime();
         double elapsed = GetTime() - startTime;
@@ -164,7 +213,7 @@ int main()
         // =============================
         //          수학 게임 업데이트
         // =============================
-                if (!mathGameOver) {
+        if (!mathGameOver) {
             mathTimer -= dt;
             if (mathTimer < 0.0f) mathTimer = 0.0f;
 
@@ -350,13 +399,73 @@ int main()
             }
         }
 
-        
+          // =============================
+        //          점프 게임 업데이트
+        // =============================
+        if (dinoState == DINO_GAMEOVER) {
+            if (IsKeyPressed(KEY_R)) {
+                // ResetDinoGame()
+                for (int i = 0; i < DINO_MAX_OBS; i++) dinoObs[i].active = false;
+                dinoPlayer.rect.y = dinoH - 70;
+                dinoPlayer.vy = 0.0f;
+                dinoPlayer.onGround = true;
+                dinoSpawnTimer = 0.0f;
+                dinoNextSpawn = 1.0f + (rand() % 120) / 60.0f;
+                dinoScore = 0.0f;
+                dinoGameSpeed = 300.0f;
+                dinoState = DINO_PLAYING;
+            }
+        } else if (dinoState == DINO_PLAYING) {
+            if ((IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_UP)) && dinoPlayer.onGround) {
+                dinoPlayer.vy = dinoJumpVel;
+                dinoPlayer.onGround = false;
+            }
 
-        // =============================
-        //          렌더링
-        // =============================
-        BeginDrawing();
-        ClearBackground(RAYWHITE);
+            dinoPlayer.vy += dinoGravity * dt;
+            dinoPlayer.rect.y += dinoPlayer.vy * dt;
+
+            if (dinoPlayer.rect.y + dinoPlayer.rect.height >= dinoGroundY) {
+                dinoPlayer.rect.y = dinoGroundY - dinoPlayer.rect.height;
+                dinoPlayer.vy = 0.0f;
+                dinoPlayer.onGround = true;
+            }
+
+            dinoSpawnTimer += dt;
+            if (dinoSpawnTimer >= dinoNextSpawn) {
+                dinoSpawnTimer = 0.0f;
+                dinoNextSpawn = 0.6f + (rand() % 140) / 100.0f;
+
+                for (int i = 0; i < DINO_MAX_OBS; i++) {
+                    if (!dinoObs[i].active) {
+                        dinoObs[i].active = true;
+                        dinoObs[i].rect.width  = 20 + (rand() % 30);
+                        dinoObs[i].rect.height = 30 + (rand() % 40);
+                        dinoObs[i].rect.x = dinoW + 50;
+                        dinoObs[i].rect.y = dinoGroundY - dinoObs[i].rect.height;
+                        break;
+                    }
+                }
+            }
+
+            for (int i = 0; i < DINO_MAX_OBS; i++) {
+                if (!dinoObs[i].active) continue;
+                dinoObs[i].rect.x -= dinoGameSpeed * dt;
+
+                if (dinoObs[i].rect.x + dinoObs[i].rect.width < -50) {
+                    dinoObs[i].active = false;
+                }
+
+                if (CheckCollisionRecs(dinoObs[i].rect, dinoPlayer.rect)) {
+                    dinoState = DINO_GAMEOVER;
+                    if (dinoScore > dinoHighscore) dinoHighscore = dinoScore;
+                    break;
+                }
+            }
+
+            dinoScore += dinoGameSpeed * dt * 0.01f;
+            dinoGameSpeed += 5.0f * dt;
+        }
+
 
         // ---- 상단 바 (수학 게임 + 메인 타이머) ----
         float now = (float)GetTime();
@@ -447,7 +556,7 @@ int main()
             }
         }
 
-        // ---- 구분선 ----
+        // ==== 구분선 ====
         DrawLine(midX, topBarHeight, midX, screenH, BLACK);
         DrawLine(0, midY, screenW, midY, BLACK);
         DrawLine(0, topBarHeight, screenW, topBarHeight, BLACK);
@@ -496,7 +605,7 @@ int main()
             EndScissorMode();
         }
 
-        // ---- 구분선 ----
+        // ==== 구분선 ====
         DrawLine(midX, topBarHeight, midX, screenH, BLACK);
         DrawLine(0, midY, screenW, midY, BLACK);
         DrawLine(0, topBarHeight, screenW, topBarHeight, BLACK);
@@ -547,6 +656,7 @@ int main()
             EndMode2D();
             EndScissorMode();
         }
+
 
         {
             Camera2D cam = { 0 };
@@ -630,10 +740,61 @@ int main()
                 DrawText("Press R to Restart or ESC to Quit", (int)(rpsW / 2 - MeasureText("Press R to Restart or ESC to Quit", 20) / 2),
                          (int)(rpsH / 2 + 70), 20, LIGHTGRAY);
             }
+        }
+         //                   점프 게임
+        // =========================================================
+        {
+            Camera2D cam = { 0 };
+            cam.target = (Vector2){ 0.0f, 0.0f };
+            cam.offset = (Vector2){ vpDino.x, vpDino.y };
+            cam.zoom = 1.0f;
+            cam.rotation = 0.0f;
+
+            BeginScissorMode((int)vpDino.x, (int)vpDino.y,
+                             (int)vpDino.width, (int)vpDino.height);
+            BeginMode2D(cam);
+
+            DrawRectangle(0, 0, (int)dinoW, (int)dinoH, RAYWHITE);
+
+            DrawText("Jump Game (SPACE/UP)", 10, 10, 20, DARKGRAY);
+
+            DrawRectangle(0, (int)dinoGroundY, (int)dinoW, (int)(dinoH - dinoGroundY), LIGHTGRAY);
+            DrawLine(0, (int)dinoGroundY, (int)dinoW, (int)dinoGroundY, DARKGRAY);
+
+            if (dinoPlayer.onGround) {
+                float t = (float)GetTime() * 12.0f;
+                int bob = (int)(4.0f * (sin(t) > 0 ? 1 : -1));
+                DrawRectangleRec(dinoPlayer.rect, MAROON);
+                DrawRectangle((int)(dinoPlayer.rect.x + 5),
+                              (int)(dinoPlayer.rect.y + dinoPlayer.rect.height - 6 + bob),
+                              12, 6, BLACK);
+                DrawRectangle((int)(dinoPlayer.rect.x + dinoPlayer.rect.width - 17),
+                              (int)(dinoPlayer.rect.y + dinoPlayer.rect.height - 6 - bob),
+                              12, 6, BLACK);
+            } else {
+                DrawRectangleRec(dinoPlayer.rect, MAROON);
+            }
+
+            for (int i = 0; i < DINO_MAX_OBS; i++) {
+                if (!dinoObs[i].active) continue;
+                DrawRectangleRec(dinoObs[i].rect, DARKGREEN);
+            }
+
+            
+
+            if (dinoState == DINO_PLAYING) {
+                DrawText("SPACE / UP = Jump", 12, 36, 16, DARKGRAY);
+            } else if (dinoState == DINO_GAMEOVER) {
+                DrawText("GAME OVER", (int)(dinoW / 2 - 80), (int)(dinoH / 2 - 50), 40, RED);
+                DrawText("Press R to restart", (int)(dinoW / 2 - 100), (int)(dinoH / 2 + 10), 20, DARKGRAY);
+
+            }
 
             EndMode2D();
             EndScissorMode();
         }
+
+
         EndDrawing();
     }
     CloseWindow();
