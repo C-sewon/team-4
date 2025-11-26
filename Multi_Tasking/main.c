@@ -82,6 +82,12 @@ typedef struct {
 
 typedef enum { DINO_PLAYING, DINO_GAMEOVER } DinoState;
 
+// ================ 전체 게임 상태 (타이틀/플레이) ================
+typedef enum {
+    PHASE_TITLE,   // 시작 화면
+    PHASE_PLAYING  // 실제 멀티 게임 플레이
+} GamePhase;
+
 int main() 
 {
     InitWindow(WINDOW_W, WINDOW_H, "Multitasking Game");
@@ -207,13 +213,72 @@ int main()
 
     int dinoFontSize = 20;
 
-
+    // ================ 게임 시작 상태: 타이틀 화면 ================
+    GamePhase phase = PHASE_TITLE;
 
     while (!WindowShouldClose()) {
         float dt = GetFrameTime();
         double elapsed = GetTime() - startTime;
 
         if (IsKeyPressed(KEY_ESCAPE)) break;
+
+        // -------------------------------------------------
+        // PHASE_TITLE : 시작 화면
+        // -------------------------------------------------
+        if (phase == PHASE_TITLE) {
+            // 시작 버튼 위치
+            float btnWidth  = 220.0f;
+            float btnHeight = 80.0f;
+            Rectangle startBtn = {
+                screenW / 2.0f - btnWidth / 2.0f,
+                2.0f * screenH / 3.0f - btnHeight / 2.0f,
+                btnWidth,
+                btnHeight
+            };
+
+            Vector2 mouse = GetMousePosition();
+            bool hover = CheckCollisionPointRec(mouse, startBtn);
+
+            // 클릭 시 게임 시작
+            if (hover && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+                phase = PHASE_PLAYING;
+                startTime = GetTime();   // 타이머를 "게임 시작 시점"으로 초기화
+            }
+
+            // ----- 타이틀 화면 그리기 -----
+            BeginDrawing();
+            // 어두운 빨간색 배경
+            ClearBackground((Color){ 60, 0, 0, 255 });
+
+            // 타이틀 텍스트 - 화면 위쪽 1/3 지점
+            const char* title = "MultiTokTok";
+            int titleFontSize = 100;
+            int titleWidth = MeasureText(title, titleFontSize);
+            int titleX = screenW / 2 - titleWidth / 2;
+            int titleY = screenH / 3 - titleFontSize / 2;
+            DrawText(title, titleX, titleY, titleFontSize, RAYWHITE);
+
+            // 시작 버튼
+            Color btnColor = hover ? (Color){ 200, 60, 60, 255 } : (Color){ 150, 30, 30, 255 };
+            DrawRectangleRec(startBtn, btnColor);
+            DrawRectangleLinesEx(startBtn, 3.0f, RAYWHITE);
+
+            const char* startText = "Start";
+            int startFontSize = 32;
+            int startTextWidth = MeasureText(startText, startFontSize);
+            int startTextX = (int)(startBtn.x + startBtn.width / 2 - startTextWidth / 2);
+            int startTextY = (int)(startBtn.y + startBtn.height / 2 - startFontSize / 2);
+            DrawText(startText, startTextX, startTextY, startFontSize, RAYWHITE);
+
+            EndDrawing();
+            // 타이틀 화면일 땐 아래 게임 로직/렌더링은 스킵
+            continue;
+        }
+
+        // -------------------------------------------------
+        // 여기부터는 실제 게임 플레이 (기존 코드)
+        // -------------------------------------------------
+
 
         // =============================
         //          수학 게임 업데이트
