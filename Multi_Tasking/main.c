@@ -79,7 +79,7 @@ typedef enum { DINO_PLAYING, DINO_GAMEOVER } DinoState;
 
 int main() 
 {
-    InitWindow(WINDOW_W, WINDOW_H, "Multitasking Game (Math + Rhythm + RPS + Jump + Dodge)");
+    InitWindow(WINDOW_W, WINDOW_H, "Multitasking Game");
     SetTargetFPS(60);
     srand((unsigned)time(NULL));
 
@@ -253,7 +253,7 @@ int main()
             if (mathTimer <= 0.0f && !mathGameOver) {
                 mathGameOver = true;
             }
-        } else {
+        }/* else {
             // 수학 게임 GameOver 상태에서 ENTER로 새 문제
             if (IsKeyPressed(KEY_ENTER)) {
                 // ResetMathGame()
@@ -266,6 +266,7 @@ int main()
                 mathGameOver = false;
             }
         }
+            */
         // =============================
         //          피하기 게임 업데이트
         // =============================
@@ -323,7 +324,7 @@ int main()
                     if (dodgeState == DODGE_PLAYING) dodgeScore++;
                 }
             }
-        } else if (dodgeState == DODGE_GAMEOVER) {
+        }/* else if (dodgeState == DODGE_GAMEOVER) {
             if (IsKeyPressed(KEY_R)) {
                 // ResetDodgeGame()
                 for (int i = 0; i < MAX_BULLETS; i++) dodgeBullets[i].active = false;
@@ -334,6 +335,7 @@ int main()
                 dodgeState = DODGE_PLAYING;
             }
         }
+            */
 
         // =============================
         //          리듬 게임 업데이트
@@ -389,7 +391,7 @@ int main()
                 if (!hit) rhythmGameOver = 1;
             }
         } 
-        else {
+        /*else {
             // R 키로 리듬 게임 리셋
             if (IsKeyPressed(KEY_R)) {
                 for (int i = 0; i < RHYTHM_MAX_NOTES; i++) rhythmNotes[i].active = 0;
@@ -397,12 +399,12 @@ int main()
                 rhythmNextSpawn = (float)(rand() % 1000) / 1000.0f + 0.5f;
                 rhythmGameOver = 0;
             }
-        }
+        }*/
 
           // =============================
         //          점프 게임 업데이트
         // =============================
-        if (dinoState == DINO_GAMEOVER) {
+        /*if (dinoState == DINO_GAMEOVER) {
             if (IsKeyPressed(KEY_R)) {
                 // ResetDinoGame()
                 for (int i = 0; i < DINO_MAX_OBS; i++) dinoObs[i].active = false;
@@ -415,7 +417,8 @@ int main()
                 dinoGameSpeed = 300.0f;
                 dinoState = DINO_PLAYING;
             }
-        } else if (dinoState == DINO_PLAYING) {
+        } else*/
+        if (dinoState == DINO_PLAYING) {
             if ((IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_UP)) && dinoPlayer.onGround) {
                 dinoPlayer.vy = dinoJumpVel;
                 dinoPlayer.onGround = false;
@@ -471,7 +474,7 @@ int main()
         float now = (float)GetTime();
 
         //리셋
-        if (gameOver && IsKeyPressed(KEY_R)) {
+       /* if (gameOver && IsKeyPressed(KEY_R)) {
             gameOver = 0;
             rpsComputerChoice = -1;
             rpsResponseActive = 0;
@@ -481,7 +484,7 @@ int main()
             rpsResultText[0] = '\0';
             rpsResultEndTime = 0.0f;
             rpsPlayerPos.x = rpsW / 2.0f;
-        }
+        }*/
 
         if (!gameOver) {
             float move = 0.0f;
@@ -550,7 +553,7 @@ int main()
             DrawText(mathBarText, mathX, 15, mathFont, mathGameOver ? RED : BLACK);
 
             if (mathGameOver) {
-                const char* msg = "MATH GAME OVER - Press Enter to reset";
+                const char* msg = "MATH GAME OVER";
                 int w = MeasureText(msg, 18);
                 DrawText(msg, screenW / 2 - w / 2, 32, 18, MAROON);
             }
@@ -596,9 +599,9 @@ int main()
                 int fw = MeasureText(msg, 32);
                 DrawText(msg, (int)(dodgeW / 2 - fw / 2), (int)(dodgeH / 2 - 40), 32, RED);
 
-                const char* msg2 = "Press R to restart";
+                /*const char* msg2 = "Press R to restart";
                 int fw2 = MeasureText(msg2, 18);
-                DrawText(msg2, (int)(dodgeW / 2 - fw2 / 2), (int)(dodgeH / 2 + 4), 18, DARKGRAY);
+                DrawText(msg2, (int)(dodgeW / 2 - fw2 / 2), (int)(dodgeH / 2 + 4), 18, DARKGRAY);*/
             }
 
             EndMode2D();
@@ -648,7 +651,7 @@ int main()
             }
 
             if (rhythmGameOver) {
-                const char* msg = "GAME OVER (R to restart)";
+                const char* msg = "GAME OVER";
                 int w = MeasureText(msg, 20);
                 DrawText(msg, (int)(vpRhythm.width / 2 - w / 2), (int)(vpRhythm.height / 2 - 10), 20, RED);
             }
@@ -737,8 +740,8 @@ int main()
                 int csTw = MeasureText(cause, csFs);
                 DrawText(cause, (int)(rpsW / 2 - csTw / 2), (int)(rpsH / 2 + 30), csFs, LIGHTGRAY);
 
-                DrawText("Press R to Restart or ESC to Quit", (int)(rpsW / 2 - MeasureText("Press R to Restart or ESC to Quit", 20) / 2),
-                         (int)(rpsH / 2 + 70), 20, LIGHTGRAY);
+                /*DrawText("Press R to Restart or ESC to Quit", (int)(rpsW / 2 - MeasureText("Press R to Restart or ESC to Quit", 20) / 2),
+                         (int)(rpsH / 2 + 70), 20, LIGHTGRAY);*/
             }
         }
          //                   점프 게임
@@ -786,7 +789,7 @@ int main()
                 DrawText("SPACE / UP = Jump", 12, 36, 16, DARKGRAY);
             } else if (dinoState == DINO_GAMEOVER) {
                 DrawText("GAME OVER", (int)(dinoW / 2 - 80), (int)(dinoH / 2 - 50), 40, RED);
-                DrawText("Press R to restart", (int)(dinoW / 2 - 100), (int)(dinoH / 2 + 10), 20, DARKGRAY);
+                /*DrawText("Press R to restart", (int)(dinoW / 2 - 100), (int)(dinoH / 2 + 10), 20, DARKGRAY);*/
 
             }
 
