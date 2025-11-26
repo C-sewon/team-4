@@ -230,7 +230,7 @@ int main()
                 mathInput[--mathInputIndex] = '\0';
             }
 
-            if (IsKeyPressed(KEY_ENTER)) {
+            if (mathTimer==0) {
                 if (mathInputIndex == 0) {
                     mathGameOver = true;
                 } else {
