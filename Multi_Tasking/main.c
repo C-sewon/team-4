@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include "raylib.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,6 +10,10 @@
 #define WINDOW_H 1000
 #define RPS_ZONE_COUNT   3
 #define RPS_PLAYER_SPEED 500.0f
+
+//시간기록용 전역변수
+float gameOverTime = 0.0f;
+bool gameOverTimeSaved = false;
 
 //================ 가위바위보 게임(오른쪽 위) ================
 typedef enum { RPS_SCISSORS = 0, RPS_ROCK = 1, RPS_PAPER = 2 } RPS;
@@ -796,8 +801,29 @@ int main()
             EndMode2D();
             EndScissorMode();
         }
+        
+    if (mathGameOver || rhythmGameOver || dodgeState == DODGE_GAMEOVER || dinoState == DINO_GAMEOVER) {
+        gameOver = 1;
+        mathGameOver = 1;
+        rhythmGameOver = 1;
+        dodgeState = DODGE_GAMEOVER;
+        dinoState = DINO_GAMEOVER;
 
+    if (!gameOverTimeSaved) {
+        gameOverTime = now;      // ← 이미 있는 now 사용!
+        gameOverTimeSaved = true;
+    }
+}
 
+if (gameOver) {
+    DrawRectangle(0, 0, screenW, screenH, Fade(BLACK, 0.5f));
+    DrawText("GAME OVER", screenW / 2 - 150, screenH / 2 - 30, 60, RAYWHITE);
+
+    char timeText[64];
+    sprintf(timeText, "Time: %.2f s", gameOverTime);
+    int tw = MeasureText(timeText, 32);
+    DrawText(timeText, screenW / 2 - tw / 2, screenH / 2 + 20, 32, RAYWHITE);
+}
         EndDrawing();
     }
     CloseWindow();
