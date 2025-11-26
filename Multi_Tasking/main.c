@@ -587,10 +587,7 @@ int main()
                 DrawRectangleRec(dinoObs[i].rect, DARKGREEN);
             }
 
-            DrawText(TextFormat("SCORE: %04.0f", dinoScore),
-                     (int)(dinoW - 200), 20, dinoFontSize, BLACK);
-            DrawText(TextFormat("BEST: %04.0f", dinoHighscore),
-                     (int)(dinoW - 200), 46, 14, GRAY);
+            
 
             if (dinoState == DINO_PLAYING) {
                 DrawText("SPACE / UP = Jump", 12, 36, 16, DARKGRAY);
