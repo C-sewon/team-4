@@ -184,8 +184,6 @@ int main() {
                     char tbuf[32];
                     snprintf(tbuf, sizeof(tbuf), "Next: %.2f", toNext);
                     DrawText(tbuf, 10, 10, 20, DARKGRAY);
-                } else {
-                    DrawText("No more rounds", 10, 40, 20, DARKGRAY);
                 }
             }
 
