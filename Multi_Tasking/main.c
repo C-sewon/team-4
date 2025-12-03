@@ -12,6 +12,8 @@
 #define RPS_PLAYER_SPEED 500.0f
 
 //시간기록용 전역변수
+#define RhythmT
+
 float gameOverTime = 0.0f;
 bool gameOverTimeSaved = false;
 
@@ -98,7 +100,7 @@ int main()
 
     const int screenW = WINDOW_W;
     const int screenH = WINDOW_H;
-    const int topBarHeight = 50;
+    const int topBarHeight = 100;
 
     const int midX = screenW / 2;
     const int midY = screenH / 2 + 25;
@@ -596,8 +598,8 @@ int main()
         BeginDrawing();
         ClearBackground(RAYWHITE);
 
-        DrawRectangle(0, 0, screenW, topBarHeight, LIGHTGRAY);
-        DrawText("MultiTokTok", 20, 15, 20, BLACK);
+        DrawRectangle(0, 0, screenW, topBarHeight, BLACK);
+        DrawText("MultiTokTok", 20, 15, 20, WHITE);
         DrawText(
             TextFormat("%02d:%02d", (int)elapsed / 60, (int)elapsed % 60),
             screenW - 100, 15, 20, BLACK
@@ -612,16 +614,16 @@ int main()
                 "%d + %d = ?   Ans: %s   (%.1fs)",
                 mathNum1, mathNum2, ansStr, mathTimer
             );
-            int mathFont = 20;
+            int mathFont = 40;
             int mathWidth = MeasureText(mathBarText, mathFont);
             int mathX = screenW / 2 - mathWidth / 2;
-            DrawText(mathBarText, mathX, 15, mathFont, mathGameOver ? RED : BLACK);
+            DrawText(mathBarText, mathX, 35, mathFont, mathGameOver ? RED : WHITE);
 
-            if (mathGameOver) {
-                const char* msg = "MATH GAME OVER";
-                int w = MeasureText(msg, 18);
-                DrawText(msg, screenW / 2 - w / 2, 32, 18, MAROON);
-            }
+            // if (mathGameOver) {
+            //     const char* msg = "MATH GAME OVER";
+            //     int w = MeasureText(msg, 18);
+            //     DrawText(msg, screenW / 2 - w / 2, 32, 18, MAROON);
+            // }
         }
 
         // ================ 구분선 ================
