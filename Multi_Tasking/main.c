@@ -6,8 +6,8 @@
 #include <math.h>
 
 
-#define WINDOW_W 1000
-#define WINDOW_H 1000
+#define WINDOW_W 1920
+#define WINDOW_H 1080
 #define RPS_ZONE_COUNT   3
 #define RPS_PLAYER_SPEED 500.0f
 
@@ -211,20 +211,17 @@ int main()
     float dinoScore     = 0.0f;
     float dinoHighscore = 0.0f;
 
-    int dinoFontSize = 20;
-
     // ================ 게임 시작 상태: 타이틀 화면 ================
     GamePhase phase = PHASE_TITLE;
 
     while (!WindowShouldClose()) {
         float dt = GetFrameTime();
-        float elapsed = (float)(GetTime() - startTime);
+        float elapsed = (float)(GetTime() - startTime); //게임시간
+        float now = (float)GetTime(); //전체시간
 
         if (IsKeyPressed(KEY_ESCAPE)) break;
 
-        // -------------------------------------------------
-        // PHASE_TITLE : 시작 화면
-        // -------------------------------------------------
+        // ================ PHASE_TITLE : 시작 화면 ================
         if (phase == PHASE_TITLE) {
             // 시작 버튼 위치
             float btnWidth  = 220.0f;
@@ -245,7 +242,7 @@ int main()
                 startTime = GetTime();   // 타이머를 "게임 시작 시점"으로 초기화
             }
 
-            // ----- 타이틀 화면 그리기 -----
+            // 타이틀 화면 그리기
             BeginDrawing();
             // 어두운 빨간색 배경
             ClearBackground((Color){ 60, 0, 0, 255 });
@@ -275,14 +272,9 @@ int main()
             continue;
         }
 
-        // -------------------------------------------------
-        // 여기부터는 실제 게임 플레이 (기존 코드)
-        // -------------------------------------------------
+        // ================ 여기부터는 실제 게임 플레이 (기존 코드) ================
 
-
-        // =============================
-        //          수학 게임 업데이트
-        // =============================
+        // ================ 수학 게임 업데이트 ================
         if (!mathGameOver) {
             mathTimer -= dt;
             if (mathTimer < 0.0f) mathTimer = 0.0f;
@@ -337,9 +329,7 @@ int main()
             }
         }
             */
-        // =============================
-        //          피하기 게임 업데이트
-        // =============================
+        // ================ 피하기 게임 업데이트 ================
         if(elapsed>=120.0f){
         if (dodgeState == DODGE_PLAYING) {
             if (IsKeyPressed(KEY_W)) {
@@ -409,10 +399,8 @@ int main()
         }
             */
 
-        // =============================
-        //          리듬 게임 업데이트
-        // =============================
-        if(elapsed>=60.0f){
+        // ================ 리듬 게임 업데이트 ================
+        if(elapsed>=30.0f){
         if (!rhythmGameOver) {
             rhythmSpawnTimer += dt;
             if (rhythmSpawnTimer > rhythmNextSpawn) {
@@ -428,8 +416,6 @@ int main()
                 rhythmSpawnTimer = 0.0f;
                 rhythmNextSpawn = (float)(rand() % 1000) / 1000.0f + 0.5f;
             }
-
-            float lineY = vpRhythm.height / 2.0f;
 
             // 노트 이동
             for (int i = 0; i < RHYTHM_MAX_NOTES; i++) {
@@ -475,9 +461,7 @@ int main()
             }
         }*/
 
-          // =============================
-        //          점프 게임 업데이트
-        // =============================
+        // ================ 점프 게임 업데이트 ================
         /*if (dinoState == DINO_GAMEOVER) {
             if (IsKeyPressed(KEY_R)) {
                 // ResetDinoGame()
@@ -492,7 +476,7 @@ int main()
                 dinoState = DINO_PLAYING;
             }
         } else*/
-         if(elapsed>=90.0f){
+         if(elapsed>=60.0f){
         if (dinoState == DINO_PLAYING) {
             if ((IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_UP)) && dinoPlayer.onGround) {
                 dinoPlayer.vy = dinoJumpVel;
@@ -546,8 +530,7 @@ int main()
     }
 
 
-        // ---- 상단 바 (수학 게임 + 메인 타이머) ----
-        float now = (float)GetTime();
+        // ================ 가위바위보 게임 업데이트 ================
 
         //리셋
        /* if (gameOver && IsKeyPressed(KEY_R)) {
@@ -562,7 +545,7 @@ int main()
             rpsPlayerPos.x = rpsW / 2.0f;
         }*/
 
-        if(elapsed>=30.0f){
+        if(elapsed>=60.0f){
         if (!gameOver) {
             float move = 0.0f;
             if (IsKeyDown(KEY_A)) move -= 1.0f;
@@ -614,7 +597,7 @@ int main()
         ClearBackground(RAYWHITE);
 
         DrawRectangle(0, 0, screenW, topBarHeight, LIGHTGRAY);
-        DrawText("Player_Name", 20, 15, 20, BLACK);
+        DrawText("MultiTokTok", 20, 15, 20, BLACK);
         DrawText(
             TextFormat("%02d:%02d", (int)elapsed / 60, (int)elapsed % 60),
             screenW - 100, 15, 20, BLACK
@@ -641,14 +624,12 @@ int main()
             }
         }
 
-        // ==== 구분선 ====
+        // ================ 구분선 ================
         DrawLine(midX, topBarHeight, midX, screenH, BLACK);
         DrawLine(0, midY, screenW, midY, BLACK);
         DrawLine(0, topBarHeight, screenW, topBarHeight, BLACK);
 	
-        // =========================================================
-        //                    우하단 : 피하기 게임
-        // =========================================================
+        // ================ 우하단 : 피하기 게임 ================
         {
             Camera2D cam = { 0 };
             cam.target = (Vector2){ 0.0f, 0.0f };
@@ -696,14 +677,12 @@ int main()
             EndScissorMode();
         }
 
-        // ==== 구분선 ====
+        // ================ 구분선 ================
         DrawLine(midX, topBarHeight, midX, screenH, BLACK);
         DrawLine(0, midY, screenW, midY, BLACK);
         DrawLine(0, topBarHeight, screenW, topBarHeight, BLACK);
 
-        // =========================================================
-        //                    좌상단 : 리듬 게임
-        // =========================================================
+        // ================ 좌상단 : 리듬 게임 ================
         {
             Camera2D cam = { 0 };
             cam.target = (Vector2){ 0.0f, 0.0f };
@@ -717,13 +696,13 @@ int main()
 
             DrawRectangle(0, 0, (int)vpRhythm.width, (int)vpRhythm.height, (Color){ 240, 240, 255, 255 });
 
-            if(elapsed>=60.0f){
+            if(elapsed>=30.0f){
             float lineY = vpRhythm.height / 2.0f;
             DrawLine(0, (int)lineY, (int)vpRhythm.width, (int)lineY, GRAY);
 
             DrawRectangle((int)RHYTHM_HIT_X, (int)(lineY - 50), (int)RHYTHM_JUDGE_WIDTH, 100, Fade(LIGHTGRAY, 0.4f));
             DrawRectangleLines((int)RHYTHM_HIT_X, (int)(lineY - 50), (int)RHYTHM_JUDGE_WIDTH, 100, DARKGRAY);
-            DrawText("Rhythm", 10, 10, 20, DARKGRAY);
+            DrawText("Rhythm(←/↓/↑/→)", 10, 10, 20, DARKGRAY);
 
             for (int i = 0; i < RHYTHM_MAX_NOTES; i++) {
                 if (!rhythmNotes[i].active) continue;
@@ -747,14 +726,14 @@ int main()
         }else {
                 // 활성화 전 안내 메시지
                 DrawText("Rhythm Game", 10, 10, 20, DARKGRAY);
-                DrawText(TextFormat("ACTIVATE IN %.0f SEC", 60.0f - elapsed), (int)(vpRhythm.width / 2 - 100), (int)(vpRhythm.height / 2 - 10), 20, BLACK);
+                DrawText(TextFormat("ACTIVATE IN %.0f SEC", 30.0f - elapsed), (int)(vpRhythm.width / 2 - 100), (int)(vpRhythm.height / 2 - 10), 20, BLACK);
             }
 
             EndMode2D();
             EndScissorMode();
         }
 
-        //=====가위바위보 게임=====
+        //================ 가위바위보 게임 ================
 
         {
             Camera2D cam = { 0 };
@@ -769,7 +748,7 @@ int main()
 
             DrawRectangle(0, 0, (int)rpsW, (int)rpsH, (Color){ 245, 235, 235, 255 });
 
-            if(elapsed>=30.0f){
+            if(elapsed>=60.0f){
             if (rpsComputerChoice != -1) {
                 const char* cstr = RpsToStr(rpsComputerChoice);
                 int fontSize = 48;
@@ -827,29 +806,17 @@ int main()
                 int goFs = 64;
                 int goTw = MeasureText(goText, goFs);
                 DrawText(goText, (int)(rpsW / 2 - goTw / 2), (int)(rpsH / 2 - 40), goFs, RED);
-
-                char cause[128];
-                const char* comp = (rpsComputerChoice != -1) ? RpsToStr(rpsComputerChoice) : "?";
-                const char* play = RpsToStr(rpsPlayerZone);
-                snprintf(cause, sizeof(cause), "You chose %s but computer had %s", play, comp);
-                int csFs = 20;
-                int csTw = MeasureText(cause, csFs);
-                DrawText(cause, (int)(rpsW / 2 - csTw / 2), (int)(rpsH / 2 + 30), csFs, LIGHTGRAY);
-
-                /*DrawText("Press R to Restart or ESC to Quit", (int)(rpsW / 2 - MeasureText("Press R to Restart or ESC to Quit", 20) / 2),
-                         (int)(rpsH / 2 + 70), 20, LIGHTGRAY);*/
             }
         }else {
                 // 활성화 전 안내 메시지
                 DrawText("RPS Game (A/D to move)", 10, 10, 20, DARKGRAY);
-                DrawText(TextFormat("ACTIVATE IN %.0f SEC", 30.0f - elapsed), (int)(rpsW / 2 - 100), (int)(rpsH / 2 - 10), 20, BLACK);
+                DrawText(TextFormat("ACTIVATE IN %.0f SEC", 60.0f - elapsed), (int)(rpsW / 2 - 100), (int)(rpsH / 2 - 10), 20, BLACK);
             }
             
             EndMode2D();
             EndScissorMode();
     }
-         //                   점프 게임
-        // =========================================================
+        // ================ 점프 게임 ================
         {
             Camera2D cam = { 0 };
             cam.target = (Vector2){ 0.0f, 0.0f };
