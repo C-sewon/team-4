@@ -218,7 +218,7 @@ int main()
 
     while (!WindowShouldClose()) {
         float dt = GetFrameTime();
-        double elapsed = GetTime() - startTime;
+        float elapsed = (float)(GetTime() - startTime);
 
         if (IsKeyPressed(KEY_ESCAPE)) break;
 
@@ -340,6 +340,7 @@ int main()
         // =============================
         //          피하기 게임 업데이트
         // =============================
+        if(elapsed>=120.0f){
         if (dodgeState == DODGE_PLAYING) {
             if (IsKeyPressed(KEY_W)) {
                 dodgeCurrentIndex--;
@@ -394,7 +395,8 @@ int main()
                     if (dodgeState == DODGE_PLAYING) dodgeScore++;
                 }
             }
-        }/* else if (dodgeState == DODGE_GAMEOVER) {
+        }
+    }/* else if (dodgeState == DODGE_GAMEOVER) {
             if (IsKeyPressed(KEY_R)) {
                 // ResetDodgeGame()
                 for (int i = 0; i < MAX_BULLETS; i++) dodgeBullets[i].active = false;
@@ -410,6 +412,7 @@ int main()
         // =============================
         //          리듬 게임 업데이트
         // =============================
+        if(elapsed>=60.0f){
         if (!rhythmGameOver) {
             rhythmSpawnTimer += dt;
             if (rhythmSpawnTimer > rhythmNextSpawn) {
@@ -461,6 +464,7 @@ int main()
                 if (!hit) rhythmGameOver = 1;
             }
         } 
+    }
         /*else {
             // R 키로 리듬 게임 리셋
             if (IsKeyPressed(KEY_R)) {
@@ -488,6 +492,7 @@ int main()
                 dinoState = DINO_PLAYING;
             }
         } else*/
+         if(elapsed>=90.0f){
         if (dinoState == DINO_PLAYING) {
             if ((IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_UP)) && dinoPlayer.onGround) {
                 dinoPlayer.vy = dinoJumpVel;
@@ -538,6 +543,7 @@ int main()
             dinoScore += dinoGameSpeed * dt * 0.01f;
             dinoGameSpeed += 5.0f * dt;
         }
+    }
 
 
         // ---- 상단 바 (수학 게임 + 메인 타이머) ----
@@ -556,6 +562,7 @@ int main()
             rpsPlayerPos.x = rpsW / 2.0f;
         }*/
 
+        if(elapsed>=30.0f){
         if (!gameOver) {
             float move = 0.0f;
             if (IsKeyDown(KEY_A)) move -= 1.0f;
@@ -564,11 +571,15 @@ int main()
             if (rpsPlayerPos.x < rpsPlayerRadius) rpsPlayerPos.x = rpsPlayerRadius;
             if (rpsPlayerPos.x > rpsW - rpsPlayerRadius) rpsPlayerPos.x = rpsW - rpsPlayerRadius;
         }
+    }else{
+        rpsPlayerPos.x = rpsW / 2.0f;
+    }
 
         int rpsPlayerZone = (int)(rpsPlayerPos.x / rpsZoneWidth);
         if (rpsPlayerZone < 0) rpsPlayerZone = 0;
         if (rpsPlayerZone >= RPS_ZONE_COUNT) rpsPlayerZone = RPS_ZONE_COUNT - 1;
 
+        if(elapsed>=30.0f){
         if (!gameOver && !rpsResponseActive && now >= rpsNextSpawnTime) {
             rpsComputerChoice = rand() % 3;
             rpsResponseActive = 1;
@@ -597,6 +608,7 @@ int main()
                 gameOver = 1;
             }
         }
+    }
 
         BeginDrawing();
         ClearBackground(RAYWHITE);
@@ -650,6 +662,7 @@ int main()
 
             DrawRectangle(0, 0, (int)dodgeW, (int)dodgeH, (Color){ 190, 210, 235, 255 });
 
+            if(elapsed>=120.0f){
             for (int i = 0; i < LANE_COUNT; i++) {
                 Color fill = (i == dodgeCurrentIndex) ? BLUE : LIGHTGRAY;
                 DrawRectangleRec(dodgeLanes[i], fill);
@@ -672,6 +685,11 @@ int main()
                 /*const char* msg2 = "Press R to restart";
                 int fw2 = MeasureText(msg2, 18);
                 DrawText(msg2, (int)(dodgeW / 2 - fw2 / 2), (int)(dodgeH / 2 + 4), 18, DARKGRAY);*/
+            }
+        }else {
+                // 활성화 전 안내 메시지
+                DrawText("Dodge Game (W/S to move)", 10, 10, 18, DARKGRAY);
+                DrawText(TextFormat("ACTIVATE IN %.0f SEC", 120.0f - elapsed), (int)(dodgeW / 2 - 100), (int)(dodgeH / 2 - 10), 20, BLACK);
             }
 
             EndMode2D();
@@ -699,6 +717,7 @@ int main()
 
             DrawRectangle(0, 0, (int)vpRhythm.width, (int)vpRhythm.height, (Color){ 240, 240, 255, 255 });
 
+            if(elapsed>=60.0f){
             float lineY = vpRhythm.height / 2.0f;
             DrawLine(0, (int)lineY, (int)vpRhythm.width, (int)lineY, GRAY);
 
@@ -725,11 +744,17 @@ int main()
                 int w = MeasureText(msg, 20);
                 DrawText(msg, (int)(vpRhythm.width / 2 - w / 2), (int)(vpRhythm.height / 2 - 10), 20, RED);
             }
+        }else {
+                // 활성화 전 안내 메시지
+                DrawText("Rhythm Game", 10, 10, 20, DARKGRAY);
+                DrawText(TextFormat("ACTIVATE IN %.0f SEC", 60.0f - elapsed), (int)(vpRhythm.width / 2 - 100), (int)(vpRhythm.height / 2 - 10), 20, BLACK);
+            }
 
             EndMode2D();
             EndScissorMode();
         }
 
+        //=====가위바위보 게임=====
 
         {
             Camera2D cam = { 0 };
@@ -744,6 +769,7 @@ int main()
 
             DrawRectangle(0, 0, (int)rpsW, (int)rpsH, (Color){ 245, 235, 235, 255 });
 
+            if(elapsed>=30.0f){
             if (rpsComputerChoice != -1) {
                 const char* cstr = RpsToStr(rpsComputerChoice);
                 int fontSize = 48;
@@ -813,7 +839,15 @@ int main()
                 /*DrawText("Press R to Restart or ESC to Quit", (int)(rpsW / 2 - MeasureText("Press R to Restart or ESC to Quit", 20) / 2),
                          (int)(rpsH / 2 + 70), 20, LIGHTGRAY);*/
             }
-        }
+        }else {
+                // 활성화 전 안내 메시지
+                DrawText("RPS Game (A/D to move)", 10, 10, 20, DARKGRAY);
+                DrawText(TextFormat("ACTIVATE IN %.0f SEC", 30.0f - elapsed), (int)(rpsW / 2 - 100), (int)(rpsH / 2 - 10), 20, BLACK);
+            }
+            
+            EndMode2D();
+            EndScissorMode();
+    }
          //                   점프 게임
         // =========================================================
         {
@@ -829,6 +863,7 @@ int main()
 
             DrawRectangle(0, 0, (int)dinoW, (int)dinoH, RAYWHITE);
 
+            if(elapsed>=90.0f){
             DrawText("Jump Game (SPACE/UP)", 10, 10, 20, DARKGRAY);
 
             DrawRectangle(0, (int)dinoGroundY, (int)dinoW, (int)(dinoH - dinoGroundY), LIGHTGRAY);
@@ -862,6 +897,11 @@ int main()
                 /*DrawText("Press R to restart", (int)(dinoW / 2 - 100), (int)(dinoH / 2 + 10), 20, DARKGRAY);*/
 
             }
+        }else {
+                // 활성화 전 안내 메시지
+                DrawText("Jump Game (SPACE/UP)", 10, 10, 20, DARKGRAY);
+                DrawText(TextFormat("ACTIVATE IN %.0f SEC", 90.0f - elapsed), (int)(dinoW / 2 - 100), (int)(dinoH / 2 - 10), 20, BLACK);
+            }
 
             EndMode2D();
             EndScissorMode();
@@ -875,7 +915,7 @@ int main()
         dinoState = DINO_GAMEOVER;
 
     if (!gameOverTimeSaved) {
-        gameOverTime = now;      // ← 이미 있는 now 사용!
+        gameOverTime = now;      
         gameOverTimeSaved = true;
     }
 }
