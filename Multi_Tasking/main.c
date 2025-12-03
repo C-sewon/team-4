@@ -151,7 +151,7 @@ int main()
     float rhythmNextSpawn  = (float)(rand() % 1000) / 1000.0f + 0.5f; // 0.5~1.5
     int   rhythmGameOver   = 0;
 
-
+    // ================ 가위바위보 게임 상태 ================
     float rpsW = vpRPS.width;
     float rpsH = vpRPS.height;
 
@@ -602,7 +602,7 @@ int main()
         DrawText("MultiTokTok", 20, 15, 20, WHITE);
         DrawText(
             TextFormat("%02d:%02d", (int)elapsed / 60, (int)elapsed % 60),
-            screenW - 100, 15, 20, BLACK
+            screenW - 100, 15, 40, WHITE
         );
 
         // 수학 게임 표시 텍스트
@@ -882,9 +882,10 @@ int main()
         rhythmGameOver = 1;
         dodgeState = DODGE_GAMEOVER;
         dinoState = DINO_GAMEOVER;
+        
 
     if (!gameOverTimeSaved) {
-        gameOverTime = now;      
+        gameOverTime = elapsed;      
         gameOverTimeSaved = true;
     }
 }
