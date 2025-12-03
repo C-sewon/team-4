@@ -478,7 +478,7 @@ int main()
                 dinoState = DINO_PLAYING;
             }
         } else*/
-         if(elapsed>=60.0f){
+         if(elapsed>=90.0f){
         if (dinoState == DINO_PLAYING) {
             if ((IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_UP)) && dinoPlayer.onGround) {
                 dinoPlayer.vy = dinoJumpVel;
@@ -564,7 +564,7 @@ int main()
         if (rpsPlayerZone < 0) rpsPlayerZone = 0;
         if (rpsPlayerZone >= RPS_ZONE_COUNT) rpsPlayerZone = RPS_ZONE_COUNT - 1;
 
-        if(elapsed>=30.0f){
+        if(elapsed>=60.0f){
         if (!gameOver && !rpsResponseActive && now >= rpsNextSpawnTime) {
             rpsComputerChoice = rand() % 3;
             rpsResponseActive = 1;
