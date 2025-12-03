@@ -12,7 +12,10 @@
 #define RPS_PLAYER_SPEED 500.0f
 
 //시간기록용 전역변수
-#define RhythmT
+#define RhythmT 10
+#define RPST 20
+#define JumpT 30
+#define DodgeT 40
 
 float gameOverTime = 0.0f;
 bool gameOverTimeSaved = false;
@@ -181,7 +184,7 @@ int main()
     float rpsResponseDuration = 4.0f;
     float rpsResponseEndTime = 0.0f;
 
-    int   gameOver = 0;
+    int   RPSgameOver = 0;
     char  rpsResultText[32] = "";
     float rpsResultEndTime = 0.0f;
     const float rpsResultShowTime = 0.8f;
@@ -332,7 +335,7 @@ int main()
         }
             */
         // ================ 피하기 게임 업데이트 ================
-        if(elapsed>=120.0f){
+        if(elapsed>=DodgeT){
         if (dodgeState == DODGE_PLAYING) {
             if (IsKeyPressed(KEY_W)) {
                 dodgeCurrentIndex--;
@@ -402,7 +405,7 @@ int main()
             */
 
         // ================ 리듬 게임 업데이트 ================
-        if(elapsed>=30.0f){
+        if(elapsed>=RhythmT){
         if (!rhythmGameOver) {
             rhythmSpawnTimer += dt;
             if (rhythmSpawnTimer > rhythmNextSpawn) {
@@ -478,7 +481,7 @@ int main()
                 dinoState = DINO_PLAYING;
             }
         } else*/
-         if(elapsed>=90.0f){
+         if(elapsed>=JumpT){
         if (dinoState == DINO_PLAYING) {
             if ((IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_UP)) && dinoPlayer.onGround) {
                 dinoPlayer.vy = dinoJumpVel;
@@ -535,8 +538,8 @@ int main()
         // ================ 가위바위보 게임 업데이트 ================
 
         //리셋
-       /* if (gameOver && IsKeyPressed(KEY_R)) {
-            gameOver = 0;
+       /* if (RPSgameOver && IsKeyPressed(KEY_R)) {
+            RPSgameOver = 0;
             rpsComputerChoice = -1;
             rpsResponseActive = 0;
             float interval = rpsSpawnIntervalMin +
@@ -547,8 +550,8 @@ int main()
             rpsPlayerPos.x = rpsW / 2.0f;
         }*/
 
-        if(elapsed>=60.0f){
-        if (!gameOver) {
+        if(elapsed>=RPST){
+        if (!RPSgameOver) {
             float move = 0.0f;
             if (IsKeyDown(KEY_A)) move -= 1.0f;
             if (IsKeyDown(KEY_D)) move += 1.0f;
@@ -564,14 +567,14 @@ int main()
         if (rpsPlayerZone < 0) rpsPlayerZone = 0;
         if (rpsPlayerZone >= RPS_ZONE_COUNT) rpsPlayerZone = RPS_ZONE_COUNT - 1;
 
-        if(elapsed>=60.0f){
-        if (!gameOver && !rpsResponseActive && now >= rpsNextSpawnTime) {
+        if(elapsed>=RPST){
+        if (!RPSgameOver && !rpsResponseActive && now >= rpsNextSpawnTime) {
             rpsComputerChoice = rand() % 3;
             rpsResponseActive = 1;
             rpsResponseEndTime = now + rpsResponseDuration;
         }
 
-        if (!gameOver && rpsResponseActive && now >= rpsResponseEndTime) {
+        if (!RPSgameOver && rpsResponseActive && now >= rpsResponseEndTime) {
             int playerChoice = rpsPlayerZone;
 
             if (RpsBeats(playerChoice, rpsComputerChoice)) {
@@ -590,7 +593,7 @@ int main()
                     snprintf(rpsResultText, sizeof(rpsResultText), "Wrong - Game Over");
                 }
                 rpsResultEndTime = now + rpsResultShowTime;
-                gameOver = 1;
+                RPSgameOver = 1;
             }
         }
     }
@@ -645,7 +648,7 @@ int main()
 
             DrawRectangle(0, 0, (int)dodgeW, (int)dodgeH, (Color){ 190, 210, 235, 255 });
 
-            if(elapsed>=120.0f){
+            if(elapsed>=DodgeT){
             for (int i = 0; i < LANE_COUNT; i++) {
                 Color fill = (i == dodgeCurrentIndex) ? BLUE : LIGHTGRAY;
                 DrawRectangleRec(dodgeLanes[i], fill);
@@ -672,7 +675,7 @@ int main()
         }else {
                 // 활성화 전 안내 메시지
                 DrawText("Dodge Game (W/S to move)", 10, 10, 18, DARKGRAY);
-                DrawText(TextFormat("ACTIVATE IN %.0f SEC", 120.0f - elapsed), (int)(dodgeW / 2 - 100), (int)(dodgeH / 2 - 10), 20, BLACK);
+                DrawText(TextFormat("ACTIVATE IN %.0f SEC", DodgeT - elapsed), (int)(dodgeW / 2 - 100), (int)(dodgeH / 2 - 10), 20, BLACK);
             }
 
             EndMode2D();
@@ -698,7 +701,7 @@ int main()
 
             DrawRectangle(0, 0, (int)vpRhythm.width, (int)vpRhythm.height, (Color){ 240, 240, 255, 255 });
 
-            if(elapsed>=30.0f){
+            if(elapsed>=RhythmT){
             float lineY = vpRhythm.height / 2.0f;
             DrawLine(0, (int)lineY, (int)vpRhythm.width, (int)lineY, GRAY);
 
@@ -728,7 +731,7 @@ int main()
         }else {
                 // 활성화 전 안내 메시지
                 DrawText("Rhythm Game", 10, 10, 20, DARKGRAY);
-                DrawText(TextFormat("ACTIVATE IN %.0f SEC", 30.0f - elapsed), (int)(vpRhythm.width / 2 - 100), (int)(vpRhythm.height / 2 - 10), 20, BLACK);
+                DrawText(TextFormat("ACTIVATE IN %.0f SEC", RhythmT - elapsed), (int)(vpRhythm.width / 2 - 100), (int)(vpRhythm.height / 2 - 10), 20, BLACK);
             }
 
             EndMode2D();
@@ -750,74 +753,75 @@ int main()
 
             DrawRectangle(0, 0, (int)rpsW, (int)rpsH, (Color){ 245, 235, 235, 255 });
 
-            if(elapsed>=60.0f){
-            if (rpsComputerChoice != -1) {
-                const char* cstr = RpsToStr(rpsComputerChoice);
-                int fontSize = 48;
-                int textW = MeasureText(cstr, fontSize);
-                DrawText(cstr, (int)(rpsW / 2 - textW / 2), 50, fontSize, RED);
+            if(elapsed>=RPST){
+                if (rpsComputerChoice != -1) {
+                    const char* cstr = RpsToStr(rpsComputerChoice);
+                    int fontSize = 48;
+                    int textW = MeasureText(cstr, fontSize);
+                    DrawText(cstr, (int)(rpsW / 2 - textW / 2), 50, fontSize, RED);
 
-                float remain = rpsResponseEndTime - now;
-                if (remain < 0) remain = 0;
-                char tbuf[32];
-                snprintf(tbuf, sizeof(tbuf), "Time: %.2f", remain);
-                DrawText(tbuf, 10, 10, 20, DARKGRAY);
-            } else {
-                if (!gameOver) {
-                    float toNext = rpsNextSpawnTime - now;
-                    if (toNext < 0) toNext = 0;
+                    float remain = rpsResponseEndTime - now;
+                    if (remain < 0) remain = 0;
                     char tbuf[32];
-                    snprintf(tbuf, sizeof(tbuf), "Next: %.2f", toNext);
+                    snprintf(tbuf, sizeof(tbuf), "Time: %.2f", remain);
                     DrawText(tbuf, 10, 10, 20, DARKGRAY);
+                 } else {
+                    if (!RPSgameOver) {
+                        float toNext = rpsNextSpawnTime - now;
+                        if (toNext < 0) toNext = 0;
+                        char tbuf[32];
+                        snprintf(tbuf, sizeof(tbuf), "Next: %.2f", toNext);
+                        DrawText(tbuf, 10, 10, 20, DARKGRAY);
+                    }
                 }
-            }
 
 
-            for (int i = 0; i < RPS_ZONE_COUNT; i++) {
-                DrawRectangleRec(rpsZones[i], LIGHTGRAY);
-                if (i == rpsPlayerZone) {
-                    DrawRectangleRec(
-                        (Rectangle){ rpsZones[i].x, rpsZones[i].y, rpsZones[i].width, rpsZones[i].height },
-                        Fade(RED, 0.25f)
-                    );
+                for (int i = 0; i < RPS_ZONE_COUNT; i++) {
+                    DrawRectangleRec(rpsZones[i], LIGHTGRAY);
+                    if (i == rpsPlayerZone) {
+                        DrawRectangleRec(
+                            (Rectangle){ rpsZones[i].x, rpsZones[i].y, rpsZones[i].width, rpsZones[i].height },
+                            Fade(RED, 0.25f)
+                        );
+                    }
+                    DrawRectangleLines((int)rpsZones[i].x, (int)rpsZones[i].y,
+                                    (int)rpsZones[i].width, (int)rpsZones[i].height, GRAY);
+
+                    const char* label = RpsToStr(i);
+                    int fs = 28;
+                    int tw = MeasureText(label, fs);
+                    DrawText(label,
+                            (int)(rpsZones[i].x + rpsZones[i].width / 2 - tw / 2),
+                            (int)(rpsZones[i].y + 12),
+                            fs, BLACK);
                 }
-                DrawRectangleLines((int)rpsZones[i].x, (int)rpsZones[i].y,
-                                   (int)rpsZones[i].width, (int)rpsZones[i].height, GRAY);
 
-                const char* label = RpsToStr(i);
-                int fs = 28;
-                int tw = MeasureText(label, fs);
-                DrawText(label,
-                         (int)(rpsZones[i].x + rpsZones[i].width / 2 - tw / 2),
-                         (int)(rpsZones[i].y + 12),
-                         fs, BLACK);
-            }
+                DrawCircleV(rpsPlayerPos, rpsPlayerRadius, DARKGREEN);
+                DrawCircleLines((int)rpsPlayerPos.x, (int)rpsPlayerPos.y, (int)rpsPlayerRadius, BLACK);
 
-            DrawCircleV(rpsPlayerPos, rpsPlayerRadius, DARKGREEN);
-            DrawCircleLines((int)rpsPlayerPos.x, (int)rpsPlayerPos.y, (int)rpsPlayerRadius, BLACK);
+                if (rpsResultEndTime > now && !RPSgameOver) {
+                    int fs = 40;
+                    int tw = MeasureText(rpsResultText, fs);
+                    DrawText(rpsResultText, (int)(rpsW / 2 - tw / 2), (int)(rpsH / 2 - 20), fs, BLUE);
+                }
 
-            if (rpsResultEndTime > now && !gameOver) {
-                int fs = 40;
-                int tw = MeasureText(rpsResultText, fs);
-                DrawText(rpsResultText, (int)(rpsW / 2 - tw / 2), (int)(rpsH / 2 - 20), fs, BLUE);
-            }
-
-            if (gameOver) {
-                DrawRectangle(0, 0, (int)rpsW, (int)rpsH, Fade(BLACK, 0.5f));
-                const char* goText = "GAME OVER";
-                int goFs = 64;
-                int goTw = MeasureText(goText, goFs);
-                DrawText(goText, (int)(rpsW / 2 - goTw / 2), (int)(rpsH / 2 - 40), goFs, RED);
-            }
-        }else {
-                // 활성화 전 안내 메시지
-                DrawText("RPS Game (A/D to move)", 10, 10, 20, DARKGRAY);
-                DrawText(TextFormat("ACTIVATE IN %.0f SEC", 60.0f - elapsed), (int)(rpsW / 2 - 100), (int)(rpsH / 2 - 10), 20, BLACK);
-            }
+                if (RPSgameOver) {
+                    DrawRectangle(0, 0, (int)rpsW, (int)rpsH, Fade(BLACK, 0.5f));
+                    const char* goText = "GAME OVER";
+                    int goFs = 64;
+                    int goTw = MeasureText(goText, goFs);
+                    DrawText(goText, (int)(rpsW / 2 - goTw / 2), (int)(rpsH / 2 - 40), goFs, RED);
+                }
+                else {
+                    // 활성화 전 안내 메시지
+                    DrawText("RPS Game (A/D to move)", 10, 10, 20, DARKGRAY);
+                    DrawText(TextFormat("ACTIVATE IN %.0f SEC", RPST - elapsed), (int)(rpsW / 2 - 100), (int)(rpsH / 2 - 10), 20, BLACK);
+                }
             
-            EndMode2D();
-            EndScissorMode();
-    }
+                EndMode2D();
+                EndScissorMode();
+            }
+        }
         // ================ 점프 게임 ================
         {
             Camera2D cam = { 0 };
@@ -832,7 +836,7 @@ int main()
 
             DrawRectangle(0, 0, (int)dinoW, (int)dinoH, RAYWHITE);
 
-            if(elapsed>=90.0f){
+            if(elapsed>=JumpT){
             DrawText("Jump Game (SPACE/UP)", 10, 10, 20, DARKGRAY);
 
             DrawRectangle(0, (int)dinoGroundY, (int)dinoW, (int)(dinoH - dinoGroundY), LIGHTGRAY);
@@ -869,28 +873,28 @@ int main()
         }else {
                 // 활성화 전 안내 메시지
                 DrawText("Jump Game (SPACE/UP)", 10, 10, 20, DARKGRAY);
-                DrawText(TextFormat("ACTIVATE IN %.0f SEC", 90.0f - elapsed), (int)(dinoW / 2 - 100), (int)(dinoH / 2 - 10), 20, BLACK);
+                DrawText(TextFormat("ACTIVATE IN %.0f SEC", JumpT - elapsed), (int)(dinoW / 2 - 100), (int)(dinoH / 2 - 10), 20, BLACK);
             }
 
             EndMode2D();
             EndScissorMode();
         }
         
-    if (mathGameOver || rhythmGameOver || dodgeState == DODGE_GAMEOVER || dinoState == DINO_GAMEOVER) {
-        gameOver = 1;
+    if (RPSgameOver || mathGameOver || rhythmGameOver || dodgeState == DODGE_GAMEOVER || dinoState == DINO_GAMEOVER) {
+        RPSgameOver = 1;
         mathGameOver = 1;
         rhythmGameOver = 1;
         dodgeState = DODGE_GAMEOVER;
         dinoState = DINO_GAMEOVER;
-        
+    
 
     if (!gameOverTimeSaved) {
         gameOverTime = elapsed;      
         gameOverTimeSaved = true;
     }
-}
+    }
 
-if (gameOver) {
+if (RPSgameOver) {
     DrawRectangle(0, 0, screenW, screenH, Fade(BLACK, 0.5f));
     DrawText("GAME OVER", screenW / 2 - 150, screenH / 2 - 30, 60, RAYWHITE);
 
