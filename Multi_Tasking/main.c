@@ -1124,6 +1124,7 @@ int main()
             if (!gameOverTimeSaved) {
                 gameOverTime = elapsed;
                 gameOverTimeSaved = true;
+                globalGameOver=true;
             }
         }
 
