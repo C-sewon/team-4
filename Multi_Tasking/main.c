@@ -6,12 +6,12 @@
 #include <math.h>
 
 #define WINDOW_W 1920
-#define WINDOW_H 1080
+#define WINDOW_H 1000
 #define RPS_ZONE_COUNT   3
 #define RPS_PLAYER_SPEED 500.0f
 
 //시간기록용 전역변수
-#define RhythmT 1
+#define RhythmT 10
 #define RPST    20
 #define JumpT   30
 #define DodgeT  40
@@ -19,6 +19,33 @@
 float gameOverTime = 0.0f;
 bool gameOverTimeSaved = false;
 bool globalGameOver = false;
+
+// ================= 난이도 조절용 전역 변수 =================
+
+// 수학 게임 : 한 문제당 제한 시간 (초)
+float G_MATH_TIME_LIMIT = 7.0f;
+
+// 공룡(점프) 게임 : 장애물 등장 간격 (초)
+float G_DINO_SPAWN_MIN = 0.6f;   // 최소 간격
+float G_DINO_SPAWN_MAX = 2.0f;   // 최대 간격
+
+// 리듬 게임 : 노트 속도와 등장 간격
+float G_RHYTHM_SPEED      = 300.0f;  // 타일 이동 속도
+float G_RHYTHM_SPAWN_MIN  = 0.5f;    // 최소 등장 간격
+float G_RHYTHM_SPAWN_MAX  = 1.5f;    // 최대 등장 간격
+
+// 피하기 게임 : 탄막 속도와 등장 간격
+float G_DODGE_BULLET_SPEED = 400.0f; // 탄막 이동 속도 (좌/우 공통)
+float G_DODGE_SPAWN_MIN    = 0.5f;   // 최소 등장 간격
+float G_DODGE_SPAWN_MAX    = 1.7f;   // 최대 등장 간격
+
+// 난이도 스테이트
+typedef enum {
+    DIFF_EASY,
+    DIFF_HARD
+} Difficulty;
+
+Difficulty gDifficulty = DIFF_EASY;
 
 //================ 가위바위보 게임(오른쪽 위) ================
 typedef enum { RPS_SCISSORS = 0, RPS_ROCK = 1, RPS_PAPER = 2 } RPS;
@@ -41,7 +68,7 @@ int RpsBeats(int a, int b) {
 
 // ================ 리듬 게임 (왼쪽 위) ================
 #define RHYTHM_MAX_NOTES   20
-#define RHYTHM_SPEED       300.0f
+// #define RHYTHM_SPEED       300.0f   // 이제 G_RHYTHM_SPEED 사용
 #define RHYTHM_HIT_X       180.0f
 #define RHYTHM_JUDGE_WIDTH 80.0f
 #define RHYTHM_TOLERANCE   80.0f
@@ -53,7 +80,7 @@ typedef struct {
 } RhythmNote;
 
 // ================ 수학 게임 (상단바) ================
-#define MATH_TIME_LIMIT 7.0f
+#define MATH_TIME_LIMIT 7.0f  // 실제로는 G_MATH_TIME_LIMIT 사용
 #define MATH_MAX_INPUT  10
 
 // ================ 피하기 게임 (오른쪽 아래) ================
@@ -92,11 +119,13 @@ typedef enum {
 
 // ================ 전체 게임 상태 (타이틀/플레이) ================
 typedef enum {
-    PHASE_TITLE,   // 시작 화면
-    PHASE_PLAYING  // 실제 멀티 게임 플레이
+    PHASE_TITLE,              // 시작 화면
+    PHASE_SELECT_DIFFICULTY,  // 난이도 선택 화면
+    PHASE_PLAYING             // 실제 멀티 게임 플레이
 } GamePhase;
 
-int main() {
+int main()
+{
     InitWindow(WINDOW_W, WINDOW_H, "Multitasking Game");
     SetTargetFPS(60);
     srand((unsigned)time(NULL));
@@ -142,7 +171,7 @@ int main() {
     int   mathAnswer = mathNum1 + mathNum2;
     char  mathInput[MATH_MAX_INPUT] = { 0 };
     int   mathInputIndex = 0;
-    float mathTimer = MATH_TIME_LIMIT;
+    float mathTimer = G_MATH_TIME_LIMIT;
     bool  mathGameOver = false;
 
     // ================ 피하기 게임 상태 ================
@@ -165,7 +194,9 @@ int main() {
     int dodgeCurrentIndex = LANE_COUNT / 2;
     Bullet dodgeBullets[MAX_BULLETS] = { 0 };
     float dodgeSpawnTimer = 0.0f;
-    float dodgeNextSpawn  = 0.8f;
+    float dodgeNextSpawn =
+        G_DODGE_SPAWN_MIN +
+        ((float)rand() / (float)RAND_MAX) * (G_DODGE_SPAWN_MAX - G_DODGE_SPAWN_MIN);
     DodgeState dodgeState = DODGE_PLAYING;
     int dodgeScore        = 0;
 
@@ -173,7 +204,9 @@ int main() {
     RhythmNote rhythmNotes[RHYTHM_MAX_NOTES];
     for (int i = 0; i < RHYTHM_MAX_NOTES; i++) rhythmNotes[i].active = 0;
     float rhythmSpawnTimer = 0.0f;
-    float rhythmNextSpawn  = (float)(rand() % 1000) / 1000.0f + 0.5f; // 0.5~1.5
+    float rhythmNextSpawn =
+        G_RHYTHM_SPAWN_MIN +
+        ((float)rand() / (float)RAND_MAX) * (G_RHYTHM_SPAWN_MAX - G_RHYTHM_SPAWN_MIN);
     int   rhythmGameOver   = 0;
 
     // ================ 가위바위보 게임 상태 ================
@@ -231,7 +264,9 @@ int main() {
     for (int i = 0; i < DINO_MAX_OBS; i++) dinoObs[i].active = false;
 
     float dinoSpawnTimer = 0.0f;
-    float dinoNextSpawn  = 1.0f + (rand() % 120) / 60.0f;
+    float dinoNextSpawn  =
+        G_DINO_SPAWN_MIN +
+        ((float)rand() / (float)RAND_MAX) * (G_DINO_SPAWN_MAX - G_DINO_SPAWN_MIN);
 
     DinoState dinoState   = DINO_PLAYING;
     float dinoGameSpeed   = 300.0f;
@@ -313,29 +348,25 @@ int main() {
             Vector2 mouse = GetMousePosition();
             bool hover = CheckCollisionPointRec(mouse, startBtn);
 
-            // 클릭 시 게임 시작
+            // 클릭 시 난이도 선택 화면으로 이동
             if (hover && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
                 phase     = PHASE_PLAYING;
                 startTime = GetTime();   // 타이머를 "게임 시작 시점"으로 초기화
+                phase = PHASE_SELECT_DIFFICULTY;
+                // startTime은 실제 게임 시작(난이도 선택 후) 때 다시 세팅
             }
 
-            // 타이틀 화면 그리기
             BeginDrawing();
-            // 어두운 빨간색 배경
             ClearBackground((Color){ 60, 0, 0, 255 });
 
-            // 타이틀 텍스트 - 화면 위쪽 1/3 지점
-            const char* title     = "MultiTokTok";
-            int         titleFontSize = 100;
-            int         titleWidth    = MeasureText(title, titleFontSize);
-            int         titleX        = screenW / 2 - titleWidth / 2;
-            int         titleY        = screenH / 3 - titleFontSize / 2;
+            const char* title = "MultiTokTok";
+            int titleFontSize = 100;
+            int titleWidth = MeasureText(title, titleFontSize);
+            int titleX = screenW / 2 - titleWidth / 2;
+            int titleY = screenH / 3 - titleFontSize / 2;
             DrawText(title, titleX, titleY, titleFontSize, RAYWHITE);
 
-            // 시작 버튼
-            Color btnColor = hover ?
-                             (Color){ 200, 60, 60, 255 } :
-                             (Color){ 150, 30, 30, 255 };
+            Color btnColor = hover ? (Color){ 200, 60, 60, 255 } : (Color){ 150, 30, 30, 255 };
             DrawRectangleRec(startBtn, btnColor);
             DrawRectangleLinesEx(startBtn, 3.0f, RAYWHITE);
 
@@ -354,7 +385,143 @@ int main() {
             }
 
             EndDrawing();
-            // 타이틀 화면일 땐 아래 게임 로직/렌더링은 스킵
+            continue;
+        }
+
+        // ================ PHASE_SELECT_DIFFICULTY : 난이도 선택 화면 ================
+        if (phase == PHASE_SELECT_DIFFICULTY) {
+            float btnWidth  = 260.0f;
+            float btnHeight = 100.0f;
+
+            Rectangle easyBtn = {
+                screenW / 4.0f - btnWidth / 2.0f,
+                screenH / 2.0f - btnHeight / 2.0f,
+                btnWidth,
+                btnHeight
+            };
+
+            Rectangle hardBtn = {
+                3.0f * screenW / 4.0f - btnWidth / 2.0f,
+                screenH / 2.0f - btnHeight / 2.0f,
+                btnWidth,
+                btnHeight
+            };
+
+            Vector2 mouse = GetMousePosition();
+            bool hoverEasy = CheckCollisionPointRec(mouse, easyBtn);
+            bool hoverHard = CheckCollisionPointRec(mouse, hardBtn);
+
+            // 마우스 클릭 처리
+            if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+                if (hoverEasy) {
+                    // EASY 난이도 설정
+                    gDifficulty = DIFF_EASY;
+
+                    G_MATH_TIME_LIMIT   = 7.0f;
+                    G_DINO_SPAWN_MIN    = 0.6f;
+                    G_DINO_SPAWN_MAX    = 2.0f;
+                    G_RHYTHM_SPEED      = 300.0f;
+                    G_RHYTHM_SPAWN_MIN  = 0.5f;
+                    G_RHYTHM_SPAWN_MAX  = 1.5f;
+                    G_DODGE_BULLET_SPEED = 400.0f;
+                    G_DODGE_SPAWN_MIN    = 0.5f;
+                    G_DODGE_SPAWN_MAX    = 1.7f;
+
+                    // 난이도 기반 값들 다시 세팅
+                    mathTimer = G_MATH_TIME_LIMIT;
+
+                    dinoSpawnTimer = 0.0f;
+                    dinoNextSpawn =
+                        G_DINO_SPAWN_MIN +
+                        ((float)rand() / (float)RAND_MAX) * (G_DINO_SPAWN_MAX - G_DINO_SPAWN_MIN);
+
+                    rhythmSpawnTimer = 0.0f;
+                    rhythmNextSpawn =
+                        G_RHYTHM_SPAWN_MIN +
+                        ((float)rand() / (float)RAND_MAX) * (G_RHYTHM_SPAWN_MAX - G_RHYTHM_SPAWN_MIN);
+
+                    dodgeSpawnTimer = 0.0f;
+                    dodgeNextSpawn =
+                        G_DODGE_SPAWN_MIN +
+                        ((float)rand() / (float)RAND_MAX) * (G_DODGE_SPAWN_MAX - G_DODGE_SPAWN_MIN);
+
+                    startTime = GetTime();   // 게임 타이머 시작
+                    phase = PHASE_PLAYING;
+                }
+                else if (hoverHard) {
+                    // HARD 난이도 설정(지금은 값 동일, 나중에 수정 가능)
+                    gDifficulty = DIFF_HARD;
+
+                    G_MATH_TIME_LIMIT   = 7.0f;
+                    G_DINO_SPAWN_MIN    = 0.6f;
+                    G_DINO_SPAWN_MAX    = 2.0f;
+                    G_RHYTHM_SPEED      = 300.0f;
+                    G_RHYTHM_SPAWN_MIN  = 0.5f;
+                    G_RHYTHM_SPAWN_MAX  = 1.5f;
+                    G_DODGE_BULLET_SPEED = 400.0f;
+                    G_DODGE_SPAWN_MIN    = 0.5f;
+                    G_DODGE_SPAWN_MAX    = 1.7f;
+
+                    mathTimer = G_MATH_TIME_LIMIT;
+
+                    dinoSpawnTimer = 0.0f;
+                    dinoNextSpawn =
+                        G_DINO_SPAWN_MIN +
+                        ((float)rand() / (float)RAND_MAX) * (G_DINO_SPAWN_MAX - G_DINO_SPAWN_MIN);
+
+                    rhythmSpawnTimer = 0.0f;
+                    rhythmNextSpawn =
+                        G_RHYTHM_SPAWN_MIN +
+                        ((float)rand() / (float)RAND_MAX) * (G_RHYTHM_SPAWN_MAX - G_RHYTHM_SPAWN_MIN);
+
+                    dodgeSpawnTimer = 0.0f;
+                    dodgeNextSpawn =
+                        G_DODGE_SPAWN_MIN +
+                        ((float)rand() / (float)RAND_MAX) * (G_DODGE_SPAWN_MAX - G_DODGE_SPAWN_MIN);
+
+                    startTime = GetTime();
+                    phase = PHASE_PLAYING;
+                }
+            }
+
+            // 그리기
+            BeginDrawing();
+            ClearBackground((Color){ 20, 20, 30, 255 });
+
+            const char* title = "Select Difficulty";
+            int tf = 60;
+            int tw = MeasureText(title, tf);
+            DrawText(title, screenW / 2 - tw / 2, screenH / 4 - tf / 2, tf, RAYWHITE);
+
+            // 중앙 세로선
+            DrawLine(screenW / 2, 0, screenW / 2, screenH, GRAY);
+
+            Color easyColor = hoverEasy ? (Color){ 80, 200, 80, 255 } : (Color){ 40, 140, 40, 255 };
+            Color hardColor = hoverHard ? (Color){ 220, 80, 80, 255 } : (Color){ 160, 40, 40, 255 };
+
+            // EASY 버튼
+            DrawRectangleRec(easyBtn, easyColor);
+            DrawRectangleLinesEx(easyBtn, 3.0f, RAYWHITE);
+            const char* easyText = "EASY";
+            int ef = 40;
+            int ew = MeasureText(easyText, ef);
+            DrawText(easyText,
+                     (int)(easyBtn.x + easyBtn.width / 2 - ew / 2),
+                     (int)(easyBtn.y + easyBtn.height / 2 - ef / 2),
+                     ef, RAYWHITE);
+
+            // HARD 버튼
+            DrawRectangleRec(hardBtn, hardColor);
+            DrawRectangleLinesEx(hardBtn, 3.0f, RAYWHITE);
+            const char* hardText = "HARD";
+            int hf = 40;
+            int hw = MeasureText(hardText, hf);
+            DrawText(hardText,
+                     (int)(hardBtn.x + hardBtn.width / 2 - hw / 2),
+                     (int)(hardBtn.y + hardBtn.height / 2 - hf / 2),
+                     hf, RAYWHITE);
+
+            EndDrawing();
             continue;
         }
 
@@ -389,9 +556,9 @@ int main() {
                         mathNum2       = rand() % 20 + 1;
                         mathAnswer     = mathNum1 + mathNum2;
                         mathInputIndex = 0;
-                        mathInput[0]   = '\0';
-                        mathTimer      = MATH_TIME_LIMIT;
-                        mathGameOver   = false;
+                        mathInput[0] = '\0';
+                        mathTimer = G_MATH_TIME_LIMIT;
+                        mathGameOver = false;
                     } else {
                         mathGameOver = true;
                     }
@@ -418,9 +585,11 @@ int main() {
                 dodgeSpawnTimer += dt;
                 if (dodgeSpawnTimer >= dodgeNextSpawn) {
                     dodgeSpawnTimer = 0.0f;
-                    dodgeNextSpawn  = 0.5f + (float)GetRandomValue(0, 120) / 100.0f;
+                    dodgeNextSpawn =
+                        G_DODGE_SPAWN_MIN +
+                        ((float)rand() / (float)RAND_MAX) * (G_DODGE_SPAWN_MAX - G_DODGE_SPAWN_MIN);
 
-                    int  lane     = GetRandomValue(0, LANE_COUNT - 1);
+                    int lane = GetRandomValue(0, LANE_COUNT - 1);
                     bool fromLeft = (GetRandomValue(0, 1) == 0);
 
                     for (int i = 0; i < MAX_BULLETS; i++) {
@@ -430,15 +599,15 @@ int main() {
                             float h = dodgeLanes[lane].height * 0.7f;
                             dodgeBullets[i].rect.height = h;
                             dodgeBullets[i].rect.width  = 26.0f;
-                            dodgeBullets[i].rect.y      = dodgeLanes[lane].y +
-                                                           (dodgeLanes[lane].height - h) / 2.0f;
+                            dodgeBullets[i].rect.y = dodgeLanes[lane].y +
+                                (dodgeLanes[lane].height - h) / 2.0f;
 
                             if (fromLeft) {
                                 dodgeBullets[i].rect.x = -dodgeBullets[i].rect.width - 40.0f;
-                                dodgeBullets[i].vx     = 400.0f;
+                                dodgeBullets[i].vx =  G_DODGE_BULLET_SPEED;
                             } else {
                                 dodgeBullets[i].rect.x = dodgeW + 40.0f;
-                                dodgeBullets[i].vx     = -400.0f;
+                                dodgeBullets[i].vx = -G_DODGE_BULLET_SPEED;
                             }
                             break;
                         }
@@ -454,8 +623,7 @@ int main() {
                         dodgeState = DODGE_GAMEOVER;
                     }
 
-                    if (dodgeBullets[i].rect.x < -150.0f ||
-                        dodgeBullets[i].rect.x > dodgeW + 150.0f) {
+                    if (dodgeBullets[i].rect.x < -150.0f || dodgeBullets[i].rect.x > dodgeW + 150.0f) {
                         dodgeBullets[i].active = false;
                         if (dodgeState == DODGE_PLAYING) dodgeScore++;
                     }
@@ -478,13 +646,15 @@ int main() {
                         }
                     }
                     rhythmSpawnTimer = 0.0f;
-                    rhythmNextSpawn  = (float)(rand() % 1000) / 1000.0f + 0.5f;
+                    rhythmNextSpawn =
+                        G_RHYTHM_SPAWN_MIN +
+                        ((float)rand() / (float)RAND_MAX) * (G_RHYTHM_SPAWN_MAX - G_RHYTHM_SPAWN_MIN);
                 }
 
                 // 노트 이동
                 for (int i = 0; i < RHYTHM_MAX_NOTES; i++) {
                     if (!rhythmNotes[i].active) continue;
-                    rhythmNotes[i].x -= RHYTHM_SPEED * dt;
+                    rhythmNotes[i].x -= G_RHYTHM_SPEED * dt;
 
                     if (rhythmNotes[i].x < RHYTHM_HIT_X - RHYTHM_TOLERANCE) {
                         rhythmGameOver = 1;
@@ -492,21 +662,18 @@ int main() {
                 }
 
                 // 입력 처리
-                if (IsKeyPressed(KEY_LEFT)  ||
-                    IsKeyPressed(KEY_DOWN)  ||
-                    IsKeyPressed(KEY_UP)    ||
-                    IsKeyPressed(KEY_RIGHT)) {
+                if (IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_DOWN) ||
+                    IsKeyPressed(KEY_UP) || IsKeyPressed(KEY_RIGHT)) {
 
                     int keyType = -1;
-                    if      (IsKeyPressed(KEY_LEFT))  keyType = 0;
-                    else if (IsKeyPressed(KEY_DOWN))  keyType = 1;
-                    else if (IsKeyPressed(KEY_UP))    keyType = 2;
-                    else if (IsKeyPressed(KEY_RIGHT)) keyType = 3;
+                    if (IsKeyPressed(KEY_LEFT))      keyType = 0;
+                    else if (IsKeyPressed(KEY_DOWN)) keyType = 1;
+                    else if (IsKeyPressed(KEY_UP))   keyType = 2;
+                    else if (IsKeyPressed(KEY_RIGHT))keyType = 3;
 
                     int hit = 0;
                     for (int i = 0; i < RHYTHM_MAX_NOTES; i++) {
-                        if (rhythmNotes[i].active &&
-                            rhythmNotes[i].type == keyType &&
+                        if (rhythmNotes[i].active && rhythmNotes[i].type == keyType &&
                             (rhythmNotes[i].x > RHYTHM_HIT_X - RHYTHM_TOLERANCE &&
                              rhythmNotes[i].x < RHYTHM_HIT_X + RHYTHM_JUDGE_WIDTH + RHYTHM_TOLERANCE)) {
                             rhythmNotes[i].active = 0;
@@ -539,15 +706,17 @@ int main() {
                 dinoSpawnTimer += dt;
                 if (dinoSpawnTimer >= dinoNextSpawn) {
                     dinoSpawnTimer = 0.0f;
-                    dinoNextSpawn  = 0.6f + (rand() % 140) / 100.0f;
+                    dinoNextSpawn =
+                        G_DINO_SPAWN_MIN +
+                        ((float)rand() / (float)RAND_MAX) * (G_DINO_SPAWN_MAX - G_DINO_SPAWN_MIN);
 
                     for (int i = 0; i < DINO_MAX_OBS; i++) {
                         if (!dinoObs[i].active) {
-                            dinoObs[i].active      = true;
+                            dinoObs[i].active = true;
                             dinoObs[i].rect.width  = 20 + (rand() % 30);
                             dinoObs[i].rect.height = 30 + (rand() % 40);
-                            dinoObs[i].rect.x      = dinoW + 50;
-                            dinoObs[i].rect.y      = dinoGroundY - dinoObs[i].rect.height;
+                            dinoObs[i].rect.x = dinoW + 50;
+                            dinoObs[i].rect.y = dinoGroundY - dinoObs[i].rect.height;
                             break;
                         }
                     }
@@ -606,11 +775,10 @@ int main() {
                     rpsResultEndTime = now + rpsResultShowTime;
 
                     float interval = rpsSpawnIntervalMin +
-                                     ((float)rand() / (float)RAND_MAX) *
-                                     (rpsSpawnIntervalMax - rpsSpawnIntervalMin);
-                    rpsNextSpawnTime   = now + interval;
-                    rpsResponseActive  = 0;
-                    rpsComputerChoice  = -1;
+                        ((float)rand() / (float)RAND_MAX) * (rpsSpawnIntervalMax - rpsSpawnIntervalMin);
+                    rpsNextSpawnTime = now + interval;
+                    rpsResponseActive = 0;
+                    rpsComputerChoice = -1;
                 } else {
                     if (playerChoice == rpsComputerChoice) {
                         snprintf(rpsResultText, sizeof(rpsResultText), "Tie - Game Over");
@@ -618,7 +786,7 @@ int main() {
                         snprintf(rpsResultText, sizeof(rpsResultText), "Wrong - Game Over");
                     }
                     rpsResultEndTime = now + rpsResultShowTime;
-                    RPSgameOver      = 1;
+                    RPSgameOver = 1;
                 }
             }
         }
@@ -673,10 +841,7 @@ int main() {
                 for (int i = 0; i < LANE_COUNT; i++) {
                     Color fill = (i == dodgeCurrentIndex) ? BLUE : LIGHTGRAY;
                     DrawRectangleRec(dodgeLanes[i], fill);
-                    DrawRectangleLinesEx(
-                        dodgeLanes[i], 2.0f,
-                        (Color){ 40, 40, 40, 255 }
-                    );
+                    DrawRectangleLinesEx(dodgeLanes[i], 2.0f, (Color){ 40, 40, 40, 255 });
                 }
 
                 for (int i = 0; i < MAX_BULLETS; i++) {
@@ -735,45 +900,30 @@ int main() {
                 float lineY = vpRhythm.height / 2.0f;
                 DrawLine(0, (int)lineY, (int)vpRhythm.width, (int)lineY, GRAY);
 
-                DrawRectangle(
-                    (int)RHYTHM_HIT_X, (int)(lineY - 50),
-                    (int)RHYTHM_JUDGE_WIDTH, 100,
-                    Fade(LIGHTGRAY, 0.4f)
-                );
-                DrawRectangleLines(
-                    (int)RHYTHM_HIT_X, (int)(lineY - 50),
-                    (int)RHYTHM_JUDGE_WIDTH, 100,
-                    DARKGRAY
-                );
+                DrawRectangle((int)RHYTHM_HIT_X, (int)(lineY - 50), (int)RHYTHM_JUDGE_WIDTH, 100, Fade(LIGHTGRAY, 0.4f));
+                DrawRectangleLines((int)RHYTHM_HIT_X, (int)(lineY - 50), (int)RHYTHM_JUDGE_WIDTH, 100, DARKGRAY);
                 DrawText("Rhythm(←/↓/↑/→)", 10, 10, 20, DARKGRAY);
 
                 for (int i = 0; i < RHYTHM_MAX_NOTES; i++) {
                     if (!rhythmNotes[i].active) continue;
-                    Color        c     = BLACK;
-                    const char*  arrow = "";
+                    Color c = BLACK;
+                    const char* arrow = "";
 
                     switch (rhythmNotes[i].type) {
-                        case 0: c = RED;    arrow = "<"; break;
-                        case 1: c = BLUE;   arrow = "v"; break;
-                        case 2: c = GREEN;  arrow = "^"; break;
-                        case 3: c = ORANGE; arrow = ">"; break;
+                    case 0: c = RED;    arrow = "<"; break;
+                    case 1: c = BLUE;   arrow = "v"; break;
+                    case 2: c = GREEN;  arrow = "^"; break;
+                    case 3: c = ORANGE; arrow = ">"; break;
                     }
                     DrawText(arrow, (int)rhythmNotes[i].x, (int)(lineY - 25), 50, c);
                 }
 
                 if (rhythmGameOver) {
                     const char* msg = "GAME OVER";
-                    int         w   = MeasureText(msg, 20);
-                    DrawText(
-                        msg,
-                        (int)(vpRhythm.width / 2 - w / 2),
-                        (int)(vpRhythm.height / 2 - 10),
-                        20,
-                        RED
-                    );
+                    int w = MeasureText(msg, 20);
+                    DrawText(msg, (int)(vpRhythm.width / 2 - w / 2), (int)(vpRhythm.height / 2 - 10), 20, RED);
                 }
             } else {
-                // 활성화 전 안내 메시지
                 DrawText("Rhythm Game", 10, 10, 20, DARKGRAY);
                 DrawText(
                     TextFormat("ACTIVATE IN %.0f SEC", RhythmT - elapsed),
@@ -852,15 +1002,12 @@ int main() {
                     );
 
                     const char* label = RpsToStr(i);
-                    int         fs    = 28;
-                    int         tw    = MeasureText(label, fs);
-                    DrawText(
-                        label,
-                        (int)(rpsZones[i].x + rpsZones[i].width / 2 - tw / 2),
-                        (int)(rpsZones[i].y + 12),
-                        fs,
-                        BLACK
-                    );
+                    int fs = 28;
+                    int tw2 = MeasureText(label, fs);
+                    DrawText(label,
+                            (int)(rpsZones[i].x + rpsZones[i].width / 2 - tw2 / 2),
+                            (int)(rpsZones[i].y + 12),
+                            fs, BLACK);
                 }
 
                 DrawCircleV(rpsPlayerPos, rpsPlayerRadius, DARKGREEN);
@@ -873,14 +1020,8 @@ int main() {
 
                 if (rpsResultEndTime > now && !RPSgameOver) {
                     int fs = 40;
-                    int tw = MeasureText(rpsResultText, fs);
-                    DrawText(
-                        rpsResultText,
-                        (int)(rpsW / 2 - tw / 2),
-                        (int)(rpsH / 2 - 20),
-                        fs,
-                        BLUE
-                    );
+                    int tw2 = MeasureText(rpsResultText, fs);
+                    DrawText(rpsResultText, (int)(rpsW / 2 - tw2 / 2), (int)(rpsH / 2 - 20), fs, BLUE);
                 }
 
                 if (RPSgameOver) {
@@ -931,31 +1072,19 @@ int main() {
             if (elapsed >= JumpT) {
                 DrawText("Jump Game (SPACE/UP)", 10, 10, 20, DARKGRAY);
 
-                DrawRectangle(
-                    0,
-                    (int)dinoGroundY,
-                    (int)dinoW,
-                    (int)(dinoH - dinoGroundY),
-                    LIGHTGRAY
-                );
+                DrawRectangle(0, (int)dinoGroundY, (int)dinoW, (int)(dinoH - dinoGroundY), LIGHTGRAY);
                 DrawLine(0, (int)dinoGroundY, (int)dinoW, (int)dinoGroundY, DARKGRAY);
 
                 if (dinoPlayer.onGround) {
-                    float t   = (float)GetTime() * 12.0f;
-                    int   bob = (int)(4.0f * (sin(t) > 0 ? 1 : -1));
+                    float t = (float)GetTime() * 12.0f;
+                    int bob = (int)(4.0f * (sin(t) > 0 ? 1 : -1));
                     DrawRectangleRec(dinoPlayer.rect, MAROON);
-                    DrawRectangle(
-                        (int)(dinoPlayer.rect.x + 5),
-                        (int)(dinoPlayer.rect.y + dinoPlayer.rect.height - 6 + bob),
-                        12, 6,
-                        BLACK
-                    );
-                    DrawRectangle(
-                        (int)(dinoPlayer.rect.x + dinoPlayer.rect.width - 17),
-                        (int)(dinoPlayer.rect.y + dinoPlayer.rect.height - 6 - bob),
-                        12, 6,
-                        BLACK
-                    );
+                    DrawRectangle((int)(dinoPlayer.rect.x + 5),
+                                  (int)(dinoPlayer.rect.y + dinoPlayer.rect.height - 6 + bob),
+                                  12, 6, BLACK);
+                    DrawRectangle((int)(dinoPlayer.rect.x + dinoPlayer.rect.width - 17),
+                                  (int)(dinoPlayer.rect.y + dinoPlayer.rect.height - 6 - bob),
+                                  12, 6, BLACK);
                 } else {
                     DrawRectangleRec(dinoPlayer.rect, MAROON);
                 }
@@ -971,7 +1100,6 @@ int main() {
                     DrawText("GAME OVER", (int)(dinoW / 2 - 80), (int)(dinoH / 2 - 50), 40, RED);
                 }
             } else {
-                // 활성화 전 안내 메시지
                 DrawText("Jump Game (SPACE/UP)", 10, 10, 20, DARKGRAY);
                 DrawText(
                     TextFormat("ACTIVATE IN %.0f SEC", JumpT - elapsed),
@@ -986,23 +1114,16 @@ int main() {
             EndScissorMode();
         }
 
-        // ====================== 전체 게임 오버 체크 ======================
-        if (RPSgameOver ||
-            mathGameOver ||
-            rhythmGameOver ||
-            dodgeState == DODGE_GAMEOVER ||
-            dinoState == DINO_GAMEOVER) {
-
-            RPSgameOver    = 1;
-            mathGameOver   = 1;
+        if (RPSgameOver || mathGameOver || rhythmGameOver || dodgeState == DODGE_GAMEOVER || dinoState == DINO_GAMEOVER) {
+            RPSgameOver = 1;
+            mathGameOver = 1;
             rhythmGameOver = 1;
-            dodgeState     = DODGE_GAMEOVER;
-            dinoState      = DINO_GAMEOVER;
+            dodgeState = DODGE_GAMEOVER;
+            dinoState = DINO_GAMEOVER;
 
             if (!gameOverTimeSaved) {
-                gameOverTime     = elapsed;
+                gameOverTime = elapsed;
                 gameOverTimeSaved = true;
-                globalGameOver    = true;
             }
         }
 
