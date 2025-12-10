@@ -12,13 +12,14 @@
 #define RPS_PLAYER_SPEED 500.0f
 
 //시간기록용 전역변수
-#define RhythmT 10
+#define RhythmT 1
 #define RPST 20
 #define JumpT 30
 #define DodgeT 40
 
 float gameOverTime = 0.0f;
 bool gameOverTimeSaved = false;
+bool globalGameOver=false;
 
 //================ 가위바위보 게임(오른쪽 위) ================
 typedef enum { RPS_SCISSORS = 0, RPS_ROCK = 1, RPS_PAPER = 2 } RPS;
@@ -223,8 +224,68 @@ int main()
         float dt = GetFrameTime();
         float elapsed = (float)(GetTime() - startTime); //게임시간
         float now = (float)GetTime(); //전체시간
+        if(globalGameOver)
+        {
+            dt=0.0f;
+        }
 
-        if (IsKeyPressed(KEY_ESCAPE)) break;
+
+        if(globalGameOver)
+        {
+            if(IsKeyPressed(KEY_R))
+            {
+                globalGameOver=false;
+                gameOverTimeSaved=false;
+
+                startTime=GetTime();
+
+                mathGameOver=false;
+                mathTimer=MATH_TIME_LIMIT;
+                mathInputIndex=0;
+                mathInput[0]='\0';
+
+                rhythmGameOver=0;
+                for(int i=0;i<RHYTHM_MAX_NOTES;i++)
+                {
+                    rhythmNotes[i].active=false;
+                }
+
+                dodgeState=DODGE_PLAYING;
+                dodgeScore=0;
+                for(int i=0;i<MAX_BULLETS;i++)
+                {
+                    dodgeBullets[i].active=false;
+                }
+
+                dinoState=DINO_PLAYING;
+                dinoPlayer.rect.y=dinoH-70;
+                dinoPlayer.vy=0;
+                dinoPlayer.onGround=true;
+                for(int i=0;i<DINO_MAX_OBS;i++)
+                {
+                    dinoObs[i].active=false;
+                }
+
+                RPSgameOver=0;
+                rpsComputerChoice=-1;
+                rpsResponseActive=0;
+                rpsPlayerPos.x=rpsW/2;
+
+                
+            }
+
+            if(IsKeyPressed(KEY_ESCAPE))
+            {
+                CloseWindow();
+                return 0;
+            }
+        }
+
+        //if (IsKeyPressed(KEY_ESCAPE))
+        //{
+           // CloseWindow();
+           // return 0;
+        //}
 
         // ================ PHASE_TITLE : 시작 화면 ================
         if (phase == PHASE_TITLE) {
@@ -271,6 +332,16 @@ int main()
             int startTextX = (int)(startBtn.x + startBtn.width / 2 - startTextWidth / 2);
             int startTextY = (int)(startBtn.y + startBtn.height / 2 - startFontSize / 2);
             DrawText(startText, startTextX, startTextY, startFontSize, RAYWHITE);
+
+            if(globalGameOver)
+            {
+                DrawRectangle(0,0,screenH,screenW,Fade(BLACK,0.7f));
+                DrawText("GAME OVER",screenH/2-180,screenW/2-120,80,RED);
+                DrawText("Press R to Restart",screenH/2-110,screenW/2+40,24,RAYWHITE);
+                DrawText("Press ESC to Exit",screenH/2-110,screenW/2+80,24,RAYWHITE);
+            }
+
+
 
             EndDrawing();
             // 타이틀 화면일 땐 아래 게임 로직/렌더링은 스킵
@@ -483,7 +554,7 @@ int main()
         } else*/
          if(elapsed>=JumpT){
         if (dinoState == DINO_PLAYING) {
-            if ((IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_UP)) && dinoPlayer.onGround) {
+            if ((IsKeyPressed(KEY_SPACE)) && dinoPlayer.onGround) {
                 dinoPlayer.vy = dinoJumpVel;
                 dinoPlayer.onGround = false;
             }
@@ -661,8 +732,6 @@ int main()
             }
 
             DrawText("Dodge Game (W/S to move)", 10, 10, 18, DARKGRAY);
-            DrawText(TextFormat("Score: %d", dodgeScore), 10, 34, 22, (Color){ 10, 10, 10, 255 });
-
             if (dodgeState == DODGE_GAMEOVER) {
                 const char* msg = "GAME OVER";
                 int fw = MeasureText(msg, 32);
@@ -891,17 +960,20 @@ int main()
     if (!gameOverTimeSaved) {
         gameOverTime = elapsed;      
         gameOverTimeSaved = true;
+        globalGameOver=true;
     }
     }
 
 if (RPSgameOver) {
     DrawRectangle(0, 0, screenW, screenH, Fade(BLACK, 0.5f));
-    DrawText("GAME OVER", screenW / 2 - 150, screenH / 2 - 30, 60, RAYWHITE);
+    DrawText("GAME OVER",screenW/2-200,screenH/2-30,80,RED);
+    DrawText("Press R to Restart",screenW/2-150,screenH/2+100,32,RAYWHITE);
+    DrawText("Press ESC to Exit",screenW/2-140,screenH/2+150,32,RAYWHITE);
 
     char timeText[64];
     sprintf(timeText, "Time: %.2f s", gameOverTime);
     int tw = MeasureText(timeText, 32);
-    DrawText(timeText, screenW / 2 - tw / 2, screenH / 2 + 20, 32, RAYWHITE);
+    DrawText(timeText, screenW / 2 - tw / 2, screenH / 2 + 50, 32, RAYWHITE);
 }
         EndDrawing();
     }
