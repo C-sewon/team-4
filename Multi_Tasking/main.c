@@ -812,15 +812,15 @@ int main()
                     int goTw = MeasureText(goText, goFs);
                     DrawText(goText, (int)(rpsW / 2 - goTw / 2), (int)(rpsH / 2 - 40), goFs, RED);
                 }
-                else {
+            }
+            else {
                     // 활성화 전 안내 메시지
                     DrawText("RPS Game (A/D to move)", 10, 10, 20, DARKGRAY);
                     DrawText(TextFormat("ACTIVATE IN %.0f SEC", RPST - elapsed), (int)(rpsW / 2 - 100), (int)(rpsH / 2 - 10), 20, BLACK);
                 }
-            
-                EndMode2D();
-                EndScissorMode();
-            }
+
+            EndMode2D();
+            EndScissorMode();
         }
         // ================ 점프 게임 ================
         {
