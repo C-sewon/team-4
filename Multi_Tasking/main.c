@@ -231,10 +231,11 @@ int main()
     int   rpsComputerChoice   = -1;
     float rpsSpawnIntervalMin = 3.0f;
     float rpsSpawnIntervalMax = 10.0f;
-    float rpsNextSpawnTime    = (float)GetTime() +
+    float rpsNextSpawnTime    = 8.0f;
+    /*(float)GetTime() +
                                 rpsSpawnIntervalMin +
                                 ((float)rand() / (float)RAND_MAX) * (rpsSpawnIntervalMax - rpsSpawnIntervalMin);
-
+*/
     int   rpsResponseActive    = 0;
     float rpsResponseDuration  = 4.0f;
     float rpsResponseEndTime   = 0.0f;
@@ -278,7 +279,10 @@ int main()
 
     while (!WindowShouldClose()) {
         float dt      = GetFrameTime();
-        float elapsed = (float)(GetTime() - startTime); // 게임시간
+        float elapsed;
+        if(!globalGameOver){
+            elapsed = (float)(GetTime() - startTime); // 게임시간
+        }
         float now     = (float)GetTime();               // 전체시간
 
         if (globalGameOver) {
@@ -417,15 +421,20 @@ int main()
                     // EASY 난이도 설정
                     gDifficulty = DIFF_EASY;
 
-                    G_MATH_TIME_LIMIT   = 7.0f;
-                    G_DINO_SPAWN_MIN    = 0.6f;
-                    G_DINO_SPAWN_MAX    = 2.0f;
-                    G_RHYTHM_SPEED      = 300.0f;
-                    G_RHYTHM_SPAWN_MIN  = 0.5f;
-                    G_RHYTHM_SPAWN_MAX  = 1.5f;
-                    G_DODGE_BULLET_SPEED = 400.0f;
-                    G_DODGE_SPAWN_MIN    = 0.5f;
-                    G_DODGE_SPAWN_MAX    = 1.7f;
+                    G_MATH_TIME_LIMIT   = 10.0f;
+                    G_DINO_SPAWN_MIN    = 2.0f;
+                    G_DINO_SPAWN_MAX    = 3.0f;
+                    G_RHYTHM_SPEED      = 175.0f;
+                    G_RHYTHM_SPAWN_MIN  = 1.0f;
+                    G_RHYTHM_SPAWN_MAX  = 4.0f;
+                    G_DODGE_BULLET_SPEED = 200.0f;
+                    G_DODGE_SPAWN_MIN    = 1.0f;
+                    G_DODGE_SPAWN_MAX    = 2.0f;
+
+                    rpsSpawnIntervalMin = 7.45f;
+                    rpsSpawnIntervalMax = 10.0f;
+                    rpsNextSpawnTime = 8.0f;
+                    rpsResponseDuration = 8.0f;
 
                     // 난이도 기반 값들 다시 세팅
                     mathTimer = G_MATH_TIME_LIMIT;
@@ -461,6 +470,9 @@ int main()
                     G_DODGE_BULLET_SPEED = 400.0f;
                     G_DODGE_SPAWN_MIN    = 0.5f;
                     G_DODGE_SPAWN_MAX    = 1.7f;
+
+                    rpsSpawnIntervalMin = 3.0f;
+                    rpsSpawnIntervalMax = 10.0f;
 
                     mathTimer = G_MATH_TIME_LIMIT;
 
