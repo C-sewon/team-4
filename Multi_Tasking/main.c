@@ -6,7 +6,7 @@
 #include <math.h>
 
 #define WINDOW_W 1920
-#define WINDOW_H 1000
+#define WINDOW_H 1080
 #define RPS_ZONE_COUNT   3
 #define RPS_PLAYER_SPEED 500.0f
 
@@ -81,7 +81,7 @@ typedef struct {
 
 // ================ 수학 게임 (상단바) ================
 #define MATH_TIME_LIMIT 7.0f  // 실제로는 G_MATH_TIME_LIMIT 사용
-#define MATH_MAX_INPUT  10
+#define MATH_MAX_INPUT  3
 
 // ================ 피하기 게임 (오른쪽 아래) ================
 #define LANE_COUNT  5
@@ -173,6 +173,7 @@ int main()
     int   mathInputIndex = 0;
     float mathTimer = G_MATH_TIME_LIMIT;
     bool  mathGameOver = false;
+    bool   mathDie = false;
 
     // ================ 피하기 게임 상태 ================
     float dodgeW = vpDodge.width;
@@ -235,7 +236,7 @@ int main()
     /*(float)GetTime() +
                                 rpsSpawnIntervalMin +
                                 ((float)rand() / (float)RAND_MAX) * (rpsSpawnIntervalMax - rpsSpawnIntervalMin);
-*/
+    */
     int   rpsResponseActive    = 0;
     float rpsResponseDuration  = 4.0f;
     float rpsResponseEndTime   = 0.0f;
@@ -301,6 +302,7 @@ int main()
                 mathTimer      = MATH_TIME_LIMIT;
                 mathInputIndex = 0;
                 mathInput[0]   = '\0';
+                mathDie        = false;
 
                 // 리듬
                 rhythmGameOver = 0;
@@ -317,7 +319,7 @@ int main()
 
                 // 점프
                 dinoState          = DINO_PLAYING;
-                dinoPlayer.rect.y  = dinoH - 70;
+                dinoPlayer.rect.y  = dinoH - 100;
                 dinoPlayer.vy      = 0;
                 dinoPlayer.onGround = true;
                 for (int i = 0; i < DINO_MAX_OBS; i++) {
@@ -560,6 +562,7 @@ int main()
             if (mathTimer == 0) {
                 if (mathInputIndex == 0) {
                     mathGameOver = true;
+                    mathDie = true;
                 } else {
                     int userAnswer = atoi(mathInput);
                     if (userAnswer == mathAnswer) {
@@ -571,8 +574,10 @@ int main()
                         mathInput[0] = '\0';
                         mathTimer = G_MATH_TIME_LIMIT;
                         mathGameOver = false;
+                        mathDie = false;
                     } else {
                         mathGameOver = true;
+                        mathDie = true;
                     }
                 }
             }
@@ -825,7 +830,7 @@ int main()
             int mathFont  = 40;
             int mathWidth = MeasureText(mathBarText, mathFont);
             int mathX     = screenW / 2 - mathWidth / 2;
-            DrawText(mathBarText, mathX, 35, mathFont, mathGameOver ? RED : WHITE);
+            DrawText(mathBarText, mathX, 35, mathFont, mathDie ? RED : WHITE);
         }
 
         // ================ 구분선 ================
@@ -858,15 +863,15 @@ int main()
 
                 for (int i = 0; i < MAX_BULLETS; i++) {
                     if (!dodgeBullets[i].active) continue;
-                    DrawRectangleRec(dodgeBullets[i].rect, (Color){ 20, 20, 20, 255 });
+                    DrawRectangleRec(dodgeBullets[i].rect, BLACK);
                 }
 
-                DrawText("Dodge Game (W/S to move)", 10, 10, 18, DARKGRAY);
-                if (dodgeState == DODGE_GAMEOVER) {
+                //DrawText("Dodge Game (W/S to move)", 10, 10, 18, DARKGRAY);
+                /*if (dodgeState == DODGE_GAMEOVER) {
                     const char* msg = "GAME OVER";
                     int         fw  = MeasureText(msg, 32);
                     DrawText(msg, (int)(dodgeW / 2 - fw / 2), (int)(dodgeH / 2 - 40), 32, RED);
-                }
+                }*/
             } else {
                 // 활성화 전 안내 메시지
                 DrawText("Dodge Game (W/S to move)", 10, 10, 18, DARKGRAY);
@@ -914,7 +919,6 @@ int main()
 
                 DrawRectangle((int)RHYTHM_HIT_X, (int)(lineY - 50), (int)RHYTHM_JUDGE_WIDTH, 100, Fade(LIGHTGRAY, 0.4f));
                 DrawRectangleLines((int)RHYTHM_HIT_X, (int)(lineY - 50), (int)RHYTHM_JUDGE_WIDTH, 100, DARKGRAY);
-                DrawText("Rhythm(←/↓/↑/→)", 10, 10, 20, DARKGRAY);
 
                 for (int i = 0; i < RHYTHM_MAX_NOTES; i++) {
                     if (!rhythmNotes[i].active) continue;
@@ -930,13 +934,13 @@ int main()
                     DrawText(arrow, (int)rhythmNotes[i].x, (int)(lineY - 25), 50, c);
                 }
 
-                if (rhythmGameOver) {
+                /*if (rhythmGameOver) {
                     const char* msg = "GAME OVER";
                     int w = MeasureText(msg, 20);
                     DrawText(msg, (int)(vpRhythm.width / 2 - w / 2), (int)(vpRhythm.height / 2 - 10), 20, RED);
-                }
+                }*/
             } else {
-                DrawText("Rhythm Game", 10, 10, 20, DARKGRAY);
+                DrawText("Rhythm Game(</v/^/>)", 10, 10, 20, DARKGRAY);
                 DrawText(
                     TextFormat("ACTIVATE IN %.0f SEC", RhythmT - elapsed),
                     (int)(vpRhythm.width / 2 - 100),
@@ -981,7 +985,8 @@ int main()
                     if (remain < 0) remain = 0;
                     char tbuf[32];
                     snprintf(tbuf, sizeof(tbuf), "Time: %.2f", remain);
-                    DrawText(tbuf, 10, 10, 20, DARKGRAY);
+                    if(!globalGameOver)
+                        DrawText(tbuf, 10, 10, 20, DARKGRAY);
                 } else {
                     if (!RPSgameOver) {
                         float toNext = rpsNextSpawnTime - now;
@@ -1022,7 +1027,7 @@ int main()
                             fs, BLACK);
                 }
 
-                DrawCircleV(rpsPlayerPos, rpsPlayerRadius, DARKGREEN);
+                DrawCircleV(rpsPlayerPos, rpsPlayerRadius, RED);
                 DrawCircleLines(
                     (int)rpsPlayerPos.x,
                     (int)rpsPlayerPos.y,
@@ -1036,7 +1041,7 @@ int main()
                     DrawText(rpsResultText, (int)(rpsW / 2 - tw2 / 2), (int)(rpsH / 2 - 20), fs, BLUE);
                 }
 
-                if (RPSgameOver) {
+                /*if (RPSgameOver) {
                     DrawRectangle(0, 0, (int)rpsW, (int)rpsH, Fade(BLACK, 0.5f));
                     const char* goText = "GAME OVER";
                     int         goFs   = 64;
@@ -1045,10 +1050,10 @@ int main()
                         goText,
                         (int)(rpsW / 2 - goTw / 2),
                         (int)(rpsH / 2 - 40),
-                        goFs,
-                        RED
+                       goFs,
+                       RED
                     );
-                }
+                }*/
             } else {
                 // 활성화 전 안내 메시지
                 DrawText("RPS Game (A/D to move)", 10, 10, 20, DARKGRAY);
@@ -1079,18 +1084,17 @@ int main()
             );
             BeginMode2D(cam);
 
-            DrawRectangle(0, 0, (int)dinoW, (int)dinoH, RAYWHITE);
+            DrawRectangle(0, 0, (int)dinoW, (int)dinoH, (Color){ 235, 245, 235, 255});
 
             if (elapsed >= JumpT) {
-                DrawText("Jump Game (SPACE/UP)", 10, 10, 20, DARKGRAY);
 
                 DrawRectangle(0, (int)dinoGroundY, (int)dinoW, (int)(dinoH - dinoGroundY), LIGHTGRAY);
                 DrawLine(0, (int)dinoGroundY, (int)dinoW, (int)dinoGroundY, DARKGRAY);
 
-                if (dinoPlayer.onGround) {
+                if (dinoPlayer.onGround && dinoState == DINO_PLAYING) {
                     float t = (float)GetTime() * 12.0f;
                     int bob = (int)(4.0f * (sin(t) > 0 ? 1 : -1));
-                    DrawRectangleRec(dinoPlayer.rect, MAROON);
+                    DrawRectangleRec(dinoPlayer.rect, DARKGREEN);
                     DrawRectangle((int)(dinoPlayer.rect.x + 5),
                                   (int)(dinoPlayer.rect.y + dinoPlayer.rect.height - 6 + bob),
                                   12, 6, BLACK);
@@ -1098,21 +1102,19 @@ int main()
                                   (int)(dinoPlayer.rect.y + dinoPlayer.rect.height - 6 - bob),
                                   12, 6, BLACK);
                 } else {
-                    DrawRectangleRec(dinoPlayer.rect, MAROON);
+                    DrawRectangleRec(dinoPlayer.rect, DARKGREEN);
                 }
 
                 for (int i = 0; i < DINO_MAX_OBS; i++) {
                     if (!dinoObs[i].active) continue;
-                    DrawRectangleRec(dinoObs[i].rect, DARKGREEN);
+                    DrawRectangleRec(dinoObs[i].rect, GRAY);
                 }
 
                 if (dinoState == DINO_PLAYING) {
-                    DrawText("SPACE / UP = Jump", 12, 36, 16, DARKGRAY);
-                } else if (dinoState == DINO_GAMEOVER) {
-                    DrawText("GAME OVER", (int)(dinoW / 2 - 80), (int)(dinoH / 2 - 50), 40, RED);
+                    //DrawText("SPACE / UP = Jump", 12, 36, 16, DARKGRAY);
                 }
             } else {
-                DrawText("Jump Game (SPACE/UP)", 10, 10, 20, DARKGRAY);
+                DrawText("Jump Game (SPACE)", 10, 10, 20, DARKGRAY);
                 DrawText(
                     TextFormat("ACTIVATE IN %.0f SEC", JumpT - elapsed),
                     (int)(dinoW / 2 - 100),
@@ -1142,7 +1144,7 @@ int main()
 
         if (RPSgameOver) {
             DrawRectangle(0, 0, screenW, screenH, Fade(BLACK, 0.5f));
-            DrawText("GAME OVER", screenW / 2 - 200, screenH / 2 - 30, 80, RED);
+            DrawText("GAME OVER", screenW / 2 - 240, screenH / 2 - 30, 80, RED);
             DrawText("Press R to Restart", screenW / 2 - 150, screenH / 2 + 100, 32, RAYWHITE);
             DrawText("Press ESC to Exit", screenW / 2 - 140, screenH / 2 + 150, 32, RAYWHITE);
 
