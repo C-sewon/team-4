@@ -8,7 +8,6 @@
 #define WINDOW_W 1920
 #define WINDOW_H 1080
 #define RPS_ZONE_COUNT   3
-#define RPS_PLAYER_SPEED 500.0f
 
 //시간기록용 전역변수
 #define RhythmT 10
@@ -22,7 +21,8 @@ bool globalGameOver = false;
 
 // ================= 난이도 조절용 전역 변수 =================
 
-// 수학 게임 : 한 문제당 제한 시간 (초)
+// 수학 게임 : 문제 자릿수와 한 문제당 제한 시간 (초)
+int G_MATH_NUM = 4;
 float G_MATH_TIME_LIMIT = 7.0f;
 
 // 공룡(점프) 게임 : 장애물 등장 간격 (초)
@@ -38,6 +38,9 @@ float G_RHYTHM_SPAWN_MAX  = 1.5f;    // 최대 등장 간격
 float G_DODGE_BULLET_SPEED = 400.0f; // 탄막 이동 속도 (좌/우 공통)
 float G_DODGE_SPAWN_MIN    = 0.5f;   // 최소 등장 간격
 float G_DODGE_SPAWN_MAX    = 1.7f;   // 최대 등장 간격
+
+// 가위바위보 게임 : 플레이어 속도
+float RPS_PLAYER_SPEED = 500.0f;
 
 // 난이도 스테이트
 typedef enum {
@@ -81,7 +84,7 @@ typedef struct {
 
 // ================ 수학 게임 (상단바) ================
 #define MATH_TIME_LIMIT 7.0f  // 실제로는 G_MATH_TIME_LIMIT 사용
-#define MATH_MAX_INPUT  3
+#define MATH_MAX_INPUT 3
 
 // ================ 피하기 게임 (오른쪽 아래) ================
 #define LANE_COUNT  5
@@ -166,8 +169,8 @@ int main()
     }; // 우하
 
     // ================ 수학 게임 상태 ================
-    int   mathNum1 = rand() % 20 + 1;
-    int   mathNum2 = rand() % 20 + 1;
+    int   mathNum1 = rand() % G_MATH_NUM + 1;
+    int   mathNum2 = rand() % G_MATH_NUM + 1;
     int   mathAnswer = mathNum1 + mathNum2;
     char  mathInput[MATH_MAX_INPUT] = { 0 };
     int   mathInputIndex = 0;
@@ -259,7 +262,7 @@ int main()
     dinoPlayer.onGround = true;
 
     float dinoGroundY = dinoH - 20;
-    float dinoGravity = 1200.0f;
+    float dinoGravity = 1000.0f;
     float dinoJumpVel = -480.0f;
 
     DinoObstacle dinoObs[DINO_MAX_OBS];
@@ -423,20 +426,23 @@ int main()
                     // EASY 난이도 설정
                     gDifficulty = DIFF_EASY;
 
-                    G_MATH_TIME_LIMIT   = 10.0f;
+                    G_MATH_TIME_LIMIT   = 12.0f;
+                    G_MATH_NUM          = 4;
                     G_DINO_SPAWN_MIN    = 2.0f;
-                    G_DINO_SPAWN_MAX    = 3.0f;
+                    G_DINO_SPAWN_MAX    = 5.0f;
+                    dinoJumpVel         = -600.0f;
                     G_RHYTHM_SPEED      = 175.0f;
                     G_RHYTHM_SPAWN_MIN  = 1.0f;
                     G_RHYTHM_SPAWN_MAX  = 4.0f;
                     G_DODGE_BULLET_SPEED = 200.0f;
-                    G_DODGE_SPAWN_MIN    = 1.0f;
-                    G_DODGE_SPAWN_MAX    = 2.0f;
+                    G_DODGE_SPAWN_MIN    = 2.0f;
+                    G_DODGE_SPAWN_MAX    = 4.0f;
 
-                    rpsSpawnIntervalMin = 7.45f;
+                    RPS_PLAYER_SPEED = 1000.0f;
+                    rpsSpawnIntervalMin = 5.0f;
                     rpsSpawnIntervalMax = 10.0f;
                     rpsNextSpawnTime = 8.0f;
-                    rpsResponseDuration = 8.0f;
+                    rpsResponseDuration = 10.0f;
 
                     // 난이도 기반 값들 다시 세팅
                     mathTimer = G_MATH_TIME_LIMIT;
@@ -464,17 +470,22 @@ int main()
                     gDifficulty = DIFF_HARD;
 
                     G_MATH_TIME_LIMIT   = 7.0f;
+                    G_MATH_NUM          = 20;
                     G_DINO_SPAWN_MIN    = 0.6f;
                     G_DINO_SPAWN_MAX    = 2.0f;
+                    dinoJumpVel         = -500.0f;
                     G_RHYTHM_SPEED      = 300.0f;
                     G_RHYTHM_SPAWN_MIN  = 0.5f;
-                    G_RHYTHM_SPAWN_MAX  = 1.5f;
+                    G_RHYTHM_SPAWN_MAX  = 2.0f;
                     G_DODGE_BULLET_SPEED = 400.0f;
-                    G_DODGE_SPAWN_MIN    = 0.5f;
-                    G_DODGE_SPAWN_MAX    = 1.7f;
+                    G_DODGE_SPAWN_MIN    = 1.5f;
+                    G_DODGE_SPAWN_MAX    = 3.0f;
 
+                    RPS_PLAYER_SPEED = 500.0f;
                     rpsSpawnIntervalMin = 3.0f;
                     rpsSpawnIntervalMax = 10.0f;
+                    rpsNextSpawnTime = 3.0f;
+                    rpsResponseDuration = 8.0f;
 
                     mathTimer = G_MATH_TIME_LIMIT;
 
@@ -567,8 +578,8 @@ int main()
                     int userAnswer = atoi(mathInput);
                     if (userAnswer == mathAnswer) {
                         // ResetMathGame()
-                        mathNum1       = rand() % 20 + 1;
-                        mathNum2       = rand() % 20 + 1;
+                        mathNum1       = rand() % G_MATH_NUM + 1;
+                        mathNum2       = rand() % G_MATH_NUM + 1;
                         mathAnswer     = mathNum1 + mathNum2;
                         mathInputIndex = 0;
                         mathInput[0] = '\0';
