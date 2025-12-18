@@ -482,7 +482,7 @@ int main()
                     G_DODGE_SPAWN_MAX    = 3.0f;
 
                     RPS_PLAYER_SPEED = 500.0f;
-                    rpsSpawnIntervalMin = 3.0f;
+                    rpsSpawnIntervalMin = 5.0f;
                     rpsSpawnIntervalMax = 10.0f;
                     rpsNextSpawnTime = 3.0f;
                     rpsResponseDuration = 8.0f;
